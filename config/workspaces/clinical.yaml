@@ -1,0 +1,7 @@
+name: Clinical
+
+model: deepseek-v4-flash
+
+system_prompt: prompts/clinical.md
+
+workspace: workspaces/clinical
