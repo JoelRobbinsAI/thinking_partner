@@ -38,11 +38,11 @@ The current architecture separates identity, conversation management, prompt con
         │          │          │
         ▼          ▼          ▼
    Workspace  Conversation  PromptBuilder
-        │          │          │
+        │          │
+        │          ▼
+        │   ReflectionAgent
+        │          │
         └──────────┴──────────┘
-                   │
-                   ▼
-                Messages
                    │
                    ▼
              OpenRouter LLM
@@ -100,6 +100,19 @@ Future versions will also include:
 - Reflection summaries
 - Additional contextual information
 
+### ReflectionAgent
+
+Represents the Thinking Partner's reflective cognitive process.
+
+Responsible for:
+
+- Reading completed conversations
+- Generating post-conversation reflections
+- Identifying important themes
+- Producing reflective insights for later processing
+
+The ReflectionAgent is intentionally independent from the conversation loop. It does not participate in conversations directly. Instead, it observes conversations after they occur, creating a foundation for future long-term memory and cognitive development.
+
 ### LLM Layer
 
 Provides a clean interface to OpenRouter.
@@ -131,11 +144,11 @@ The LLM receives fully assembled context from the PromptBuilder rather than cons
 
 ### Current Milestone
 
-Designing the reflection architecture that will generate long-term memory independently from the conversation loop.
+Building persistent reflection journals that capture the Thinking Partner's internal reflections after each conversation.
 
 ### Next Milestone
 
-Build the Reflection Agent and Memory architecture.
+Persist reflections to Markdown and begin designing the long-term memory pipeline.
 
 ---
 
@@ -171,30 +184,19 @@ Build the Reflection Agent and Memory architecture.
 ## Future Architecture
 
 ```text
-                        User
-                          │
-                          ▼
-                    Conversation
-                          │
-          ┌───────────────┴───────────────┐
-          │                               │
-Conversation History              Workspace Identity
-          │                               │
-          └───────────────┬───────────────┘
-                          │
-                   PromptBuilder
-                          ▲
-                          │
-                  Long-term Memory
-                          ▲
-                          │
-                  Reflection Agent
-                          ▲
-                          │
-                    Conversations
-                          │
-                          ▼
-                     OpenRouter LLM
+                       Conversation
+      │
+      ▼
+Reflection Agent
+      │
+      ▼
+Reflection Journal
+      │
+      ▼
+Memory Extraction
+      │
+      ▼
+Long-term Memory
 ```
 
 ### Reflection Loop
