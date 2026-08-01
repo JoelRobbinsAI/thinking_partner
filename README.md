@@ -1,226 +1,205 @@
-# Thinking Partner
+Thinking Partner
 
 A personal AI Thinking Partner built around persistent conversations, modular cognition, reflection, and long-term memory.
 
-## Vision
+Vision
 
 Thinking Partner is not intended to be another chatbot.
 
-The goal is to build a persistent AI Thinking Partner that develops continuity over time through conversations, reflection, memory, and modular cognitive processes.
+Its purpose is to become a persistent AI Thinking Partner that develops continuity through conversations, reflection, and long-term knowledge.
 
-The emphasis is on building a clean, extensible architecture first, allowing increasingly sophisticated cognitive capabilities to be added over time.
+Rather than relying on increasingly large prompts or models, the project explores whether long-term intelligence can emerge from cleanly separated cognitive processes operating over persistent knowledge.
 
-## Core Philosophy
+Core Philosophy
 
-The Thinking Partner is built one architectural layer at a time.
+The project is built one architectural layer at a time.
 
-Rather than attempting to build intelligence all at once, the project focuses on creating clean, modular components with clearly defined responsibilities. Each layer should be independently understandable, testable, and replaceable.
+Rather than creating a single monolithic AI, the system is composed of small, specialized components with clearly defined responsibilities.
 
-The long-term goal is for intelligence to emerge from the interaction of these components rather than from a single monolithic prompt or model.
+Every component should:
 
-Development follows a few guiding principles:
+Have one responsibility.
+Be independently understandable.
+Be independently replaceable.
+Leave inspectable artifacts.
+Prefer configuration over hardcoded behavior.
+Store persistent knowledge in human-readable Markdown.
 
-- Build one architectural layer at a time.
-- Give every component a single responsibility.
-- Prefer configuration over hardcoded behavior.
-- Store important cognitive artifacts in human-readable Markdown.
-- Build for long-term maintainability rather than short-term convenience.
-- Commit small, working milestones before moving on.
+The architecture intentionally separates conversation from learning.
 
-## Current Architecture
+System Architecture
 
-The current architecture separates identity, conversation management, prompt construction, and language model interaction into independent components.
+Thinking Partner consists of two independent subsystems.
 
-```text
-                app.py
-                   │
-        ┌──────────┼──────────┐
-        │          │          │
-        ▼          ▼          ▼
-   Workspace  Conversation  PromptBuilder
-        │          │
-        │          ▼
-        │   ReflectionAgent
-        │          │
-        └──────────┴──────────┘
-                   │
-                   ▼
-             OpenRouter LLM
-```
+1. Conversation Interface
 
-### Workspace
+The Conversation Interface is responsible for interacting with the user.
 
-Defines the conversational identity of a workspace.
+It consumes context but never creates long-term knowledge.
 
-Responsible for:
+User
+   │
+   ▼
+PromptBuilder
+   ├── Workspace Profile
+   ├── System Prompt
+   ├── Conversation History
+   └── MemoryRetriever
+            │
+            ▼
+      Long-Term Memory Store
+            │
+            ▼
+      OpenRouter LLM
+            │
+            ▼
+ Assistant Response
+            │
+            ▼
+ Save Conversation
+Components
 
-- Model selection
-- System prompt
-- Workspace directory
+Workspace
 
-Workspace configuration is loaded from YAML, allowing different workspaces to use different models and behaviors without changing application code.
+Defines:
 
-### ConversationManager
+Model
+System Prompt
+Workspace Directory
 
-Responsible for:
-
-- Creating conversations
-- Listing conversations
-- Loading conversations
-
-Returns `Conversation` objects rather than raw Markdown.
-
-### Conversation
-
-Represents a single persistent conversation.
+ConversationManager
 
 Responsible for:
 
-- Conversation metadata
-- Markdown storage
-- Appending user messages
-- Appending assistant messages
-- Saving conversation history
-- Converting conversation history into OpenAI/OpenRouter message format
+Creating conversations
+Listing conversations
+Loading conversations
 
-The conversation itself serves as the system's working memory.
-
-### PromptBuilder
-
-Responsible for assembling the complete context presented to the language model.
-
-Currently combines:
-
-- Workspace system prompt
-- Conversation history
-
-Future versions will also include:
-
-- Long-term memory
-- Reflection summaries
-- Additional contextual information
-
-### ReflectionAgent
-
-Represents the Thinking Partner's reflective cognitive process.
-
-Responsible for:
-
-- Reading completed conversations
-- Generating post-conversation reflections
-- Identifying important themes
-- Producing reflective insights for later processing
-
-The ReflectionAgent is intentionally independent from the conversation loop. It does not participate in conversations directly. Instead, it observes conversations after they occur, creating a foundation for future long-term memory and cognitive development.
-
-### LLM Layer
-
-Provides a clean interface to OpenRouter.
-
-Responsible for:
-
-- Loading API credentials
-- Sending messages
-- Receiving responses
-
-The LLM receives fully assembled context from the PromptBuilder rather than constructing prompts itself.
-
----
-
-## Current Status
-
-### Completed
-
-- ✅ Workspace configuration
-- ✅ Conversation management
-- ✅ Persistent Markdown conversations
-- ✅ Conversation loading
-- ✅ Conversation history parsing
-- ✅ PromptBuilder
-- ✅ Workspace system prompts
-- ✅ Conversation continuity
-- ✅ OpenRouter integration
-- ✅ Secure API key handling
-
-### Current Milestone
-
-Building persistent reflection journals that capture the Thinking Partner's internal reflections after each conversation.
-
-### Next Milestone
-
-Persist reflections to Markdown and begin designing the long-term memory pipeline.
-
----
-
-## Roadmap
-
-### Phase 1 — Conversation Foundation ✅
-
-- Workspace configuration
-- Conversation persistence
-- PromptBuilder
-- OpenRouter integration
-- Conversation continuity
-
-### Phase 2 — Reflection Architecture 🚧
-
-- Reflection Agent
-- Reflection journal
-- Memory extraction
-- Long-term memory store
-- PromptBuilder memory integration
-
-### Phase 3 — Cognitive Architecture
-
-- Background reflection loop
-- Project memory
-- Identity evolution
-- Planning
-- Semantic retrieval
-- Multi-model cognition
-
----
-
-## Future Architecture
-
-```text
-                       Conversation
-      │
-      ▼
-Reflection Agent
-      │
-      ▼
-Reflection Journal
-      │
-      ▼
-Memory Extraction
-      │
-      ▼
-Long-term Memory
-```
-
-### Reflection Loop
-
-The reflection system is intentionally separated from the conversation loop.
-
-```text
 Conversation
-      │
-      ▼
-Reflection Agent
-      │
-      ▼
-Reflection Journal
-      │
-      ▼
-Memory Extraction
-      │
-      ▼
-Long-term Memory
-```
 
-The conversation agent **reads** long-term memory but never writes it.
+Represents one persistent conversation.
 
-The reflection agent **writes** long-term memory but never participates directly in conversations.
+Responsible for:
 
-This separation allows the Thinking Partner to distinguish between immediate conversational context (working memory) and durable knowledge accumulated over time.
+Metadata
+Markdown storage
+User messages
+Assistant messages
+Saving conversation history
+Producing OpenAI/OpenRouter message format
+
+PromptBuilder
+
+Constructs the complete prompt presented to the LLM.
+
+Possible context includes:
+
+Workspace profile
+System prompt
+Conversation history
+Long-term memories
+Future contextual information
+
+MemoryRetriever
+
+Responsible only for reading the memory store.
+
+It:
+
+Retrieves relevant memories.
+Returns them to PromptBuilder.
+Never modifies memory.
+2. Cognitive Engine
+
+The Cognitive Engine is an independent background system.
+
+It does not participate in conversations.
+
+Its purpose is to improve long-term knowledge.
+
+Conversation Logs
+        │
+        ▼
+ Reflection
+        │
+        ▼
+ MemoryManager
+        │
+        ▼
+ Long-Term Memory Store
+Responsibilities
+
+The Cognitive Engine may eventually include multiple specialized background workflows.
+
+Examples include:
+
+Reflection
+Memory creation
+Memory consolidation
+Preference extraction
+Identity refinement
+Project organization
+Relationship discovery
+
+Each workflow has a single responsibility and operates independently.
+
+Memory Architecture
+
+The Conversation Interface and Cognitive Engine communicate only through the Long-Term Memory Store.
+
+Conversation Interface
+        │
+        ▼
+MemoryRetriever
+        │
+        ▼
+Long-Term Memory Store
+        ▲
+        │
+MemoryManager
+        ▲
+        │
+Cognitive Engine
+
+This establishes a strict architectural boundary.
+
+The Conversation Interface reads memory.
+
+The Cognitive Engine writes memory.
+
+Neither subsystem directly controls the other.
+
+Current Status
+Completed
+Workspace configuration
+Conversation management
+Persistent Markdown conversations
+PromptBuilder
+Conversation continuity
+OpenRouter integration
+Secure API key handling
+Current Milestone
+
+Building the foundational Conversation Interface.
+
+Next Milestone
+
+Designing the Long-Term Memory Store and Cognitive Engine.
+
+Long-Term Roadmap
+Phase 1 — Conversation Foundation ✅
+Persistent conversations
+PromptBuilder
+Conversation continuity
+Workspace profiles
+Phase 2 — Memory Architecture 🚧
+Long-Term Memory Store
+MemoryRetriever
+MemoryManager
+Reflection journals
+Phase 3 — Cognitive Engine
+Background workflows
+Reflection pipeline
+Memory consolidation
+Context orchestration
+Multiple local cognitive models
