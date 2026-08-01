@@ -1,14 +1,14 @@
 from pathlib import Path
 
-from backend.memory_manager import MemoryManager
+from backend.memory_retriever import MemoryRetriever
 
 
 class PromptBuilder:
     def __init__(self):
-        self.memory_manager = MemoryManager()
+        self.memory_retriever = MemoryRetriever()
 
     def build(self, workspace, conversation):
-        memories = self.memory_manager.get_memories(
+        memories = self.memory_retriever.get_memories(
             conversation
         )
 
