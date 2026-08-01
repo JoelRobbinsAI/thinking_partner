@@ -1,10 +1,16 @@
 from pathlib import Path
 
+from backend.memory_manager import MemoryManager
+
 
 class PromptBuilder:
-    def build(self, workspace, conversation, memories=None):
-        if memories is None:
-            memories = []
+    def __init__(self):
+        self.memory_manager = MemoryManager()
+
+    def build(self, workspace, conversation):
+        memories = self.memory_manager.get_memories(
+            conversation
+        )
 
         system_prompt = Path(
             workspace.system_prompt

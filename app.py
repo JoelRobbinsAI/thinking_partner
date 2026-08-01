@@ -1,9 +1,7 @@
-from backend.reflection_agent import ReflectionAgent
 from backend.config import load_workspace
 from backend.conversation_manager import ConversationManager
 from backend.llm import OpenRouterLLM
 from backend.prompt_builder import PromptBuilder
-from backend.reflection_agent import ReflectionAgent
 
 workspace = load_workspace("config/workspaces/clinical.yaml")
 
@@ -14,10 +12,6 @@ llm = OpenRouterLLM(
 )
 
 builder = PromptBuilder()
-
-reflection_agent = ReflectionAgent()
-
-reflection_agent = ReflectionAgent()
 
 conversations = manager.list_conversations()
 
@@ -64,14 +58,6 @@ messages = builder.build(
 assistant_reply = llm.generate(messages)
 
 conversation.append_assistant(assistant_reply)
-
-reflection = reflection_agent.reflect(
-    conversation,
-    llm,
-)
-
-print("\nReflection:\n")
-print(reflection)
 
 print("\nUpdated Conversation:\n")
 print(conversation.content)
