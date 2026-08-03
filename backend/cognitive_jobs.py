@@ -1,28 +1,51 @@
+from backend.cognitive_log import CognitiveLog
+
+log = CognitiveLog()
+
+
 class ConversationUnderstanding:
     def run(self):
-        print("Conversation Understanding")
+        log.append(
+            "Conversation Understanding",
+            "Stub execution."
+        )
 
 
 class ProjectUnderstanding:
     def run(self):
-        print("Project Understanding")
+        log.append(
+            "Project Understanding",
+            "Stub execution."
+        )
 
 
 class UserUnderstanding:
     def run(self):
-        print("User Understanding")
+        log.append(
+            "User Understanding",
+            "Stub execution."
+        )
 
 
 class SelfImprovement:
     def run(self):
-        print("Self Improvement")
+        log.append(
+            "Self Improvement",
+            "Stub execution."
+        )
 
 
 class OpenContemplation:
     def run(self):
-        print("Open Contemplation")
+        log.append(
+            "Open Contemplation",
+            "Stub execution."
+        )
 
 
 class Consolidation:
     def run(self):
-        print("Consolidation")
+        log.append(
+            "Consolidation",
+            "Stub execution."
+        )

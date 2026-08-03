@@ -2,6 +2,7 @@ from backend.config import load_workspace
 from backend.conversation_manager import ConversationManager
 from backend.llm import OpenRouterLLM
 from backend.prompt_builder import PromptBuilder
+from backend.cognitive_engine import CognitiveEngine
 
 workspace = load_workspace("config/workspaces/clinical.yaml")
 
@@ -12,6 +13,9 @@ llm = OpenRouterLLM(
 )
 
 builder = PromptBuilder()
+
+engine = CognitiveEngine()
+engine.start()
 
 conversations = manager.list_conversations()
 
