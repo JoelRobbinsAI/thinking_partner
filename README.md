@@ -8,9 +8,11 @@ Thinking Partner is not intended to be another chatbot.
 
 Its purpose is to become a persistent AI Thinking Partner that develops continuity through conversations, reflection, and long-term knowledge.
 
-Rather than relying on increasingly large prompts or models, the project explores whether long-term intelligence can emerge from cleanly separated cognitive processes operating over persistent knowledge.
+Rather than relying on increasingly large prompts or increasingly complex prompts, the project explores whether long-term intelligence can emerge from independent cognitive processes operating over persistent knowledge.
 
-## Core Philosophy
+---
+
+# Core Philosophy
 
 The project is built one architectural layer at a time.
 
@@ -25,17 +27,43 @@ Every component should:
 * Prefer configuration over hardcoded behavior.
 * Store persistent knowledge in human-readable Markdown.
 
-The architecture intentionally separates conversation from learning.
+The architecture intentionally separates communication from cognition.
+
+---
+
+# Architectural Boundary
+
+Thinking Partner consists of two completely independent programs.
+
+The **Conversation Interface** is responsible for interacting with the user.
+
+The **Cognitive Engine** is responsible for developing long-term understanding.
+
+Neither program ever invokes the other.
+
+Instead, they communicate only through persistent artifacts such as conversations, journals, and the Long-Term Memory Store.
+
+Both programs must always remain:
+
+* Independently executable
+* Independently testable
+* Independently maintainable
+
+This boundary is a permanent architectural constraint.
 
 ---
 
 # System Architecture
 
-Thinking Partner consists of two independent subsystems.
+## Program 1 — Conversation Interface
 
-## 1. Conversation Interface
+Entry point:
 
-The Conversation Interface is responsible for interacting with the user.
+```text
+app.py
+```
+
+The Conversation Interface is responsible only for communicating with the user.
 
 It consumes context but never creates long-term knowledge.
 
@@ -99,7 +127,7 @@ Responsible for:
 
 ### PromptBuilder
 
-Constructs the complete prompt presented to the LLM.
+Constructs the complete prompt presented to the language model.
 
 Possible context includes:
 
@@ -113,24 +141,30 @@ Possible context includes:
 
 ### MemoryRetriever
 
-Responsible only for reading the memory store.
+Responsible only for reading persistent memory.
 
 It:
 
 * Retrieves relevant memories.
 * Returns them to the PromptBuilder.
-* Never modifies memory.
 * Never creates memory.
+* Never modifies memory.
+
+The Conversation Interface never writes to long-term memory.
 
 ---
 
-## 2. Cognitive Engine
+# Program 2 — Cognitive Engine
 
-The Cognitive Engine is an independent background subsystem.
+Entry point:
+
+```text
+python -m backend.cognitive_engine
+```
+
+The Cognitive Engine is responsible only for improving long-term understanding.
 
 It never participates directly in conversations.
-
-Its responsibility is to observe, reflect, and gradually improve the system's long-term understanding.
 
 ```text
 Cognitive Engine
@@ -140,6 +174,9 @@ Scheduler
         │
         ▼
 Cognitive Jobs
+        │
+        ▼
+Cognitive Prompt Builder
         │
         ▼
 Cognitive Log
@@ -155,9 +192,9 @@ Long-Term Memory Store
 
 The Scheduler is the heartbeat of the Cognitive Engine.
 
-It determines when cognitive work should occur and dispatches cognitive jobs.
+Its responsibility is to determine when cognitive work should occur.
 
-Initially, jobs execute sequentially.
+Current implementation executes each cognitive job sequentially.
 
 Future versions will execute jobs according to scheduled time slots.
 
@@ -165,7 +202,7 @@ Future versions will execute jobs according to scheduled time slots.
 
 ### Cognitive Jobs
 
-Each cognitive job has a single responsibility.
+Each cognitive job observes a different object of attention while following the same reasoning pattern.
 
 Current jobs include:
 
@@ -176,13 +213,23 @@ Current jobs include:
 * Open Contemplation
 * Consolidation
 
-Every cognitive job follows the same reasoning pattern:
+Every cognitive job answers the same three questions:
 
 1. What happened?
 2. What did I learn?
 3. What should change because of what I learned?
 
-The only thing that changes between jobs is the object of attention.
+Only the object of attention changes.
+
+---
+
+### Cognitive Prompt Builder
+
+Constructs prompts for cognitive work.
+
+Its responsibility is completely separate from the PromptBuilder used by the Conversation Interface.
+
+Future versions will use these prompts to drive language-model-based reflection.
 
 ---
 
@@ -190,17 +237,19 @@ The only thing that changes between jobs is the object of attention.
 
 The Cognitive Log is the working journal of the Cognitive Engine.
 
-Every cognitive job leaves a persistent record of its execution.
+Every cognitive job records a structured reflection.
 
-Future versions will replace stub entries with structured reflections generated by language models.
+Currently these reflections are placeholders.
 
-The Cognitive Log serves as temporary working memory prior to long-term consolidation.
+Future versions will replace them with model-generated reasoning.
+
+The Cognitive Log serves as temporary working memory until consolidation occurs.
 
 ---
 
 ### MemoryManager
 
-MemoryManager is responsible for maintaining long-term memory.
+MemoryManager maintains long-term knowledge.
 
 Future responsibilities include:
 
@@ -216,7 +265,7 @@ Unlike MemoryRetriever, MemoryManager never participates in conversations.
 
 # Memory Architecture
 
-The Conversation Interface and Cognitive Engine communicate only through the Long-Term Memory Store.
+The two programs communicate only through shared persistent knowledge.
 
 ```text
 Conversation Interface
@@ -236,11 +285,11 @@ Cognitive Engine
 
 This establishes a strict architectural boundary.
 
-The Conversation Interface reads memory.
+The Conversation Interface only reads memory.
 
-The Cognitive Engine writes memory.
+The Cognitive Engine only writes and maintains memory.
 
-Neither subsystem directly controls the other.
+Neither program directly invokes the other.
 
 ---
 
@@ -252,13 +301,17 @@ Neither subsystem directly controls the other.
 * ✅ Conversation management
 * ✅ Persistent Markdown conversations
 * ✅ PromptBuilder
+* ✅ MemoryRetriever
 * ✅ Conversation continuity
 * ✅ OpenRouter integration
 * ✅ Secure API key handling
+* ✅ Independent Conversation Interface
 * ✅ Cognitive Engine foundation
 * ✅ Scheduler
 * ✅ Cognitive Jobs
+* ✅ Cognitive Prompt Builder
 * ✅ Cognitive Log
+* ✅ Independent Cognitive Engine
 
 ---
 
@@ -266,68 +319,72 @@ Neither subsystem directly controls the other.
 
 Building the Cognitive Engine.
 
-Current work is focused on evolving the Cognitive Log from simple execution records into structured cognitive reflections.
+Current work is focused on replacing placeholder cognitive reflections with genuine autonomous reasoning.
 
 ---
 
 ## Next Milestone
 
-Implementing structured cognitive reflections and preparing the MemoryManager.
+Connecting cognitive jobs to language models and preparing the MemoryManager.
 
 ---
 
 # Long-Term Roadmap
 
-## Phase 1 — Conversation Foundation ✅
+## Phase 1 — Conversation Interface ✅
 
 * Persistent conversations
 * PromptBuilder
 * Conversation continuity
 * Workspace profiles
+* Memory retrieval
 
 ---
 
-## Phase 2 — Cognitive Foundation ✅
+## Phase 2 — Cognitive Engine Foundation ✅
 
-* Cognitive Engine
 * Scheduler
 * Cognitive Jobs
+* Cognitive Prompt Builder
 * Cognitive Log
+* Independent execution
 
 ---
 
 ## Phase 3 — Memory Architecture 🚧
 
-* Structured cognitive reflections
+* Language-model reflections
 * MemoryManager
 * Long-Term Memory Store
 * Memory consolidation
-* MemoryRetriever integration
+* Canonical memory documents
 
 ---
 
 ## Phase 4 — Autonomous Cognition
 
-* Background reflection pipeline
-* Multiple cognitive workflows
-* Context orchestration
+* Continuous background cognition
+* Reflection pipeline
+* Memory refinement
+* Project understanding
+* User understanding
+* Self-improvement
 * Multiple local cognitive models
-* Persistent project understanding
-* Long-term user understanding
-* Self-improving cognitive processes
 
 ---
 
 # Design Principle
 
-The architecture intentionally separates conversation from cognition.
+Thinking Partner is built from two independent programs.
 
-The Conversation Interface exists to communicate.
+The Conversation Interface communicates.
 
-The Cognitive Engine exists to think.
+The Cognitive Engine thinks.
 
 The Conversation Interface consumes knowledge.
 
 The Cognitive Engine produces knowledge.
 
-Over time, intelligence is expected to emerge not from a single increasingly complex prompt, but from the interaction of small, persistent, modular cognitive processes operating over a shared body of long-term knowledge.
+Neither program is responsible for the work of the other.
+
+Intelligence is expected to emerge from the interaction of independent cognitive processes operating over a persistent body of shared knowledge.

@@ -8,3 +8,8 @@ class CognitiveEngine:
     def start(self):
         print("Starting Cognitive Engine...")
         self.scheduler.start()
+
+
+if __name__ == "__main__":
+    engine = CognitiveEngine()
+    engine.start()
