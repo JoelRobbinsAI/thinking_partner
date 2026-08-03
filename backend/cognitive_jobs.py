@@ -1,8 +1,10 @@
 from backend.cognitive_log import CognitiveLog
 from backend.cognitive_prompt_builder import CognitivePromptBuilder
+from backend.cognitive_llm import CognitiveLLM
 
 log = CognitiveLog()
 builder = CognitivePromptBuilder()
+llm = CognitiveLLM()
 
 
 class ConversationUnderstanding:
@@ -12,7 +14,8 @@ class ConversationUnderstanding:
 
     def run(self):
         prompt = builder.build(self)
-        log.append(self.job, prompt)
+        reflection = llm.generate(prompt)
+        log.append(self.job, reflection)
 
 
 class ProjectUnderstanding:
@@ -22,7 +25,8 @@ class ProjectUnderstanding:
 
     def run(self):
         prompt = builder.build(self)
-        log.append(self.job, prompt)
+        reflection = llm.generate(prompt)
+        log.append(self.job, reflection)
 
 
 class UserUnderstanding:
@@ -32,7 +36,8 @@ class UserUnderstanding:
 
     def run(self):
         prompt = builder.build(self)
-        log.append(self.job, prompt)
+        reflection = llm.generate(prompt)
+        log.append(self.job, reflection)
 
 
 class SelfImprovement:
@@ -42,7 +47,8 @@ class SelfImprovement:
 
     def run(self):
         prompt = builder.build(self)
-        log.append(self.job, prompt)
+        reflection = llm.generate(prompt)
+        log.append(self.job, reflection)
 
 
 class OpenContemplation:
@@ -55,7 +61,8 @@ class OpenContemplation:
 
     def run(self):
         prompt = builder.build(self)
-        log.append(self.job, prompt)
+        reflection = llm.generate(prompt)
+        log.append(self.job, reflection)
 
 
 class Consolidation:
@@ -65,4 +72,5 @@ class Consolidation:
 
     def run(self):
         prompt = builder.build(self)
-        log.append(self.job, prompt)
+        reflection = llm.generate(prompt)
+        log.append(self.job, reflection)

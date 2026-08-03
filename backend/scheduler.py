@@ -1,3 +1,5 @@
+import time
+
 from backend.cognitive_jobs import (
     ConversationUnderstanding,
     ProjectUnderstanding,
@@ -18,9 +20,16 @@ class Scheduler:
             OpenContemplation(),
             Consolidation(),
         ]
+        self.last_slot = None
 
     def start(self):
         print("Starting Scheduler...")
 
-        for job in self.jobs:
-            job.run()
+        while True:
+            slot = int(time.time() // 15) % len(self.jobs)
+
+            if slot != self.last_slot:
+                self.last_slot = slot
+                self.jobs[slot].run()
+
+            time.sleep(1)

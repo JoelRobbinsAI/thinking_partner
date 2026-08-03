@@ -12,4 +12,8 @@ class CognitiveEngine:
 
 if __name__ == "__main__":
     engine = CognitiveEngine()
-    engine.start()
+
+    try:
+        engine.start()
+    except KeyboardInterrupt:
+        print("\nStopping Cognitive Engine...")

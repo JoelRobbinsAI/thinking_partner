@@ -179,6 +179,9 @@ Cognitive Jobs
 Cognitive Prompt Builder
         │
         ▼
+Cognitive LLM
+        │
+        ▼
 Cognitive Log
         │
         ▼
@@ -192,11 +195,15 @@ Long-Term Memory Store
 
 The Scheduler is the heartbeat of the Cognitive Engine.
 
-Its responsibility is to determine when cognitive work should occur.
+It continuously monitors the clock and determines when cognitive work should occur.
 
-Current implementation executes each cognitive job sequentially.
+Only one cognitive job is permitted to execute at a time.
 
-Future versions will execute jobs according to scheduled time slots.
+The scheduler itself performs no reasoning. Its only responsibility is coordinating when cognitive jobs begin.
+
+During development the scheduler currently uses short timed intervals for testing.
+
+Future versions will execute jobs according to a production schedule.
 
 ---
 
@@ -229,7 +236,21 @@ Constructs prompts for cognitive work.
 
 Its responsibility is completely separate from the PromptBuilder used by the Conversation Interface.
 
-Future versions will use these prompts to drive language-model-based reflection.
+The Prompt Builder assembles the question a cognitive job should answer, while remaining independent of any language model implementation.
+
+---
+
+### Cognitive LLM
+
+Provides the language-model interface for the Cognitive Engine.
+
+Responsibilities include:
+
+* Receiving cognitive prompts.
+* Sending them to the selected language model.
+* Returning generated reflections.
+
+Separating the language-model interface from the cognitive jobs allows different local or remote models to be substituted without modifying the architecture of the Cognitive Engine.
 
 ---
 
@@ -237,13 +258,13 @@ Future versions will use these prompts to drive language-model-based reflection.
 
 The Cognitive Log is the working journal of the Cognitive Engine.
 
-Every cognitive job records a structured reflection.
+Every cognitive job records its reflection in the Cognitive Log.
 
-Currently these reflections are placeholders.
+The log is append-only and serves as temporary working memory until later consolidation into long-term memory.
 
-Future versions will replace them with model-generated reasoning.
+Current implementation records placeholder reflections through the CognitiveLLM abstraction.
 
-The Cognitive Log serves as temporary working memory until consolidation occurs.
+Future versions will record genuine model-generated reasoning.
 
 ---
 
@@ -306,26 +327,31 @@ Neither program directly invokes the other.
 * ✅ OpenRouter integration
 * ✅ Secure API key handling
 * ✅ Independent Conversation Interface
-* ✅ Cognitive Engine foundation
-* ✅ Scheduler
+* ✅ Cognitive Engine
+* ✅ Clock-based Scheduler
 * ✅ Cognitive Jobs
 * ✅ Cognitive Prompt Builder
+* ✅ Cognitive LLM abstraction
 * ✅ Cognitive Log
-* ✅ Independent Cognitive Engine
+* ✅ End-to-end Cognitive Pipeline
 
 ---
 
 ## Current Milestone
 
-Building the Cognitive Engine.
+Integrating local language models into the Cognitive Engine.
 
-Current work is focused on replacing placeholder cognitive reflections with genuine autonomous reasoning.
+The scheduler, cognitive pipeline, and logging infrastructure are complete.
+
+Current work is focused on replacing the CognitiveLLM placeholder with a local model while measuring execution time and validating the scheduling architecture.
 
 ---
 
 ## Next Milestone
 
-Connecting cognitive jobs to language models and preparing the MemoryManager.
+Connect the CognitiveLLM to Ollama and execute the first genuine cognitive reflections.
+
+Once model execution timing has been validated, the scheduler will transition from accelerated testing intervals to its intended production schedule.
 
 ---
 
