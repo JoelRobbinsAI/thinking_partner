@@ -249,6 +249,10 @@ Responsibilities include:
 * Receiving cognitive prompts.
 * Sending them to the selected language model.
 * Returning generated reflections.
+* Measuring execution time.
+* Remaining independent of the cognitive jobs.
+
+The current implementation uses local language models through Ollama.
 
 Separating the language-model interface from the cognitive jobs allows different local or remote models to be substituted without modifying the architecture of the Cognitive Engine.
 
@@ -330,8 +334,11 @@ Neither program directly invokes the other.
 * ✅ Cognitive Engine
 * ✅ Clock-based Scheduler
 * ✅ Cognitive Jobs
+* ✅ Universal Reflection Template
 * ✅ Cognitive Prompt Builder
-* ✅ Cognitive LLM abstraction
+* ✅ Cognitive LLM
+* ✅ Ollama integration
+* ✅ Execution timing
 * ✅ Cognitive Log
 * ✅ End-to-end Cognitive Pipeline
 
@@ -339,20 +346,27 @@ Neither program directly invokes the other.
 
 ## Current Milestone
 
-Integrating local language models into the Cognitive Engine.
+Building contextual cognition.
 
-The scheduler, cognitive pipeline, and logging infrastructure are complete.
+The Cognitive Engine now performs genuine autonomous reflections using local language models.
 
-Current work is focused on replacing the CognitiveLLM placeholder with a local model while measuring execution time and validating the scheduling architecture.
+Current work is focused on providing each cognitive job with the appropriate context so its reflections are grounded in evidence rather than generic reasoning.
 
 ---
 
 ## Next Milestone
 
-Connect the CognitiveLLM to Ollama and execute the first genuine cognitive reflections.
+Provide each cognitive job with meaningful context.
 
-Once model execution timing has been validated, the scheduler will transition from accelerated testing intervals to its intended production schedule.
+Examples include:
 
+* Recent conversations
+* Active projects
+* User knowledge
+* Recent cognitive log entries
+* Long-term memory
+
+Once each job has access to appropriate context, the scheduler will transition from accelerated testing intervals to its intended production schedule.
 ---
 
 # Long-Term Roadmap
