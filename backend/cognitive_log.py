@@ -20,3 +20,11 @@ class CognitiveLog:
                 f"Job: {job}\n\n"
                 f"{reflection}\n\n"
             )
+
+    def read(self):
+        if not self.filepath.exists():
+            return ""
+
+        return self.filepath.read_text(
+            encoding="utf-8"
+        )

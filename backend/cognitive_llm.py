@@ -5,7 +5,7 @@ import ollama
 
 class CognitiveLLM:
     def __init__(self):
-        self.model = "qwen3:8b"
+        self.model = "phi3:mini"
 
     def generate(self, prompt):
         print(f"Thinking with {self.model}...")
