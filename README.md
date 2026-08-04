@@ -74,11 +74,12 @@ User
 PromptBuilder
    ├── Workspace Profile
    ├── System Prompt
-   ├── Conversation History
-   └── MemoryRetriever
-            │
-            ▼
-      Long-Term Memory Store
+   ├── Context Retrievers
+   │      ├── Conversation History
+   │      └── MemoryRetriever
+   │
+   ▼
+OpenRouter LLM
             │
             ▼
       OpenRouter LLM
@@ -174,6 +175,9 @@ Scheduler
         │
         ▼
 Cognitive Jobs
+        │
+        ▼
+Context Retrievers
         │
         ▼
 Cognitive Prompt Builder
