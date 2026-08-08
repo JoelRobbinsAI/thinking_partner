@@ -41,7 +41,7 @@ The **Cognitive Engine** is responsible for developing long-term understanding.
 
 Neither program ever invokes the other.
 
-Instead, they communicate only through persistent artifacts such as conversations, journals, and the Long-Term Memory Store.
+Instead, they communicate only through persistent artifacts such as conversations, journals, and canonical memory.
 
 Both programs must always remain:
 
@@ -65,7 +65,7 @@ app.py
 
 The Conversation Interface is responsible only for communicating with the user.
 
-It consumes context but never creates long-term knowledge.
+It consumes knowledge but never creates or modifies long-term knowledge.
 
 ```text
 User
@@ -76,19 +76,19 @@ PromptBuilder
    ├── System Prompt
    ├── Context Retrievers
    │      ├── Conversation History
-   │      └── MemoryRetriever
+   │      ├── Canonical User Memory
+   │      ├── Canonical Project Memory
+   │      ├── Canonical Self Memory
+   │      └── Relevant Cognitive Activity
    │
    ▼
 OpenRouter LLM
-            │
-            ▼
-      OpenRouter LLM
-            │
-            ▼
- Assistant Response
-            │
-            ▼
- Save Conversation
+   │
+   ▼
+Assistant Response
+   │
+   ▼
+Save Conversation
 ```
 
 ### Workspace
@@ -124,6 +124,10 @@ Responsible for:
 * Saving conversation history
 * Producing OpenAI/OpenRouter message format
 
+The Conversation Archive represents experience.
+
+It is the authoritative record of what happened in conversations.
+
 ---
 
 ### PromptBuilder
@@ -135,18 +139,21 @@ Possible context includes:
 * Workspace profile
 * System prompt
 * Conversation history
-* Long-term memories
+* Canonical memory
+* Relevant recent cognitive activity
 * Future contextual information
+
+The PromptBuilder assembles context but does not perform cognition.
 
 ---
 
 ### MemoryRetriever
 
-Responsible only for reading persistent memory.
+Responsible only for reading persistent knowledge.
 
 It:
 
-* Retrieves relevant memories.
+* Retrieves relevant canonical memories.
 * Returns them to the PromptBuilder.
 * Never creates memory.
 * Never modifies memory.
@@ -186,16 +193,18 @@ Cognitive Prompt Builder
 Cognitive LLM
         │
         ▼
-Cognitive Log
+Specialized Cognitive Journal
         │
         ▼
-MemoryManager
+Consolidation
         │
         ▼
-Long-Term Memory Store
+Canonical Memory
 ```
 
-### Scheduler
+---
+
+## Scheduler
 
 The Scheduler is the heartbeat of the Cognitive Engine.
 
@@ -203,7 +212,9 @@ It continuously monitors the clock and determines when cognitive work should occ
 
 Only one cognitive job is permitted to execute at a time.
 
-The scheduler itself performs no reasoning. Its only responsibility is coordinating when cognitive jobs begin.
+The scheduler itself performs no reasoning.
+
+Its only responsibility is coordinating when cognitive jobs begin.
 
 During development the scheduler currently uses short timed intervals for testing.
 
@@ -211,9 +222,9 @@ Future versions will execute jobs according to a production schedule.
 
 ---
 
-### Cognitive Jobs
+# Cognitive Jobs
 
-Each cognitive job observes a different object of attention while following the same reasoning pattern.
+Each cognitive job observes a different object of attention while following the same fundamental reasoning pattern.
 
 Current jobs include:
 
@@ -230,21 +241,152 @@ Every cognitive job answers the same three questions:
 2. What did I learn?
 3. What should change because of what I learned?
 
-Only the object of attention changes.
+Only the object of attention and relevant context change.
+
+Each cognitive job writes its reflection to its corresponding Cognitive Journal.
 
 ---
 
-### Cognitive Prompt Builder
+# Cognitive Journals
+
+The Cognitive Engine uses specialized journals rather than one undifferentiated cognitive log.
+
+The five working journals are:
+
+* Conversation Journal
+* User Journal
+* Project Journal
+* Self Journal
+* Open Contemplation Journal
+
+These journals are the working-memory layer of the Cognitive Engine.
+
+Each journal contains reflections relevant to one cognitive domain.
+
+The journals allow the Cognitive Engine to process small, focused bodies of recent cognition rather than repeatedly processing the entire cognitive history.
+
+---
+
+## Conversation Journal
+
+Contains reflections about recent conversations.
+
+It transforms conversational experience into structured understanding.
+
+Possible content includes:
+
+* Important events
+* Significant ideas
+* Decisions
+* Unresolved questions
+* Changes in direction
+* Information relevant to other cognitive domains
+
+---
+
+## User Journal
+
+Contains reflections about the user.
+
+Possible content includes:
+
+* Goals
+* Preferences
+* Habits
+* Patterns
+* Interests
+* Long-term tendencies
+* Important changes
+
+---
+
+## Project Journal
+
+Contains reflections about active projects.
+
+Possible content includes:
+
+* Project purpose
+* Current status
+* Progress
+* Obstacles
+* Decisions
+* Priorities
+* Dependencies
+* Emerging direction
+
+---
+
+## Self Journal
+
+Contains reflections about the Cognitive Engine itself.
+
+Possible content includes:
+
+* Reasoning quality
+* Mistakes
+* Missed opportunities
+* Successful reasoning strategies
+* Behavioral patterns
+* Cognitive improvements
+* Understanding of the system's own operation
+
+---
+
+## Open Contemplation Journal
+
+Contains reflections that do not clearly belong to another cognitive domain.
+
+Possible content includes:
+
+* Unresolved ideas
+* Unexpected observations
+* Relationships between concepts
+* Questions not addressed elsewhere
+* Ideas whose eventual significance or category is not yet clear
+
+Open Contemplation provides a place for useful cognition before its permanent destination is known.
+
+---
+
+# Cognitive Prompt Builder
 
 Constructs prompts for cognitive work.
 
 Its responsibility is completely separate from the PromptBuilder used by the Conversation Interface.
 
-The Prompt Builder assembles the question a cognitive job should answer, while remaining independent of any language model implementation.
+The Cognitive Prompt Builder assembles the question a cognitive job should answer and combines only the context relevant to that job.
+
+For example:
+
+```text
+Conversation Understanding
+    ├── Recent Conversation
+    └── Recent Conversation Journal
+
+Project Understanding
+    ├── Project Journal
+    └── Relevant Canonical Project Memory
+
+User Understanding
+    ├── User Journal
+    └── Canonical User Memory
+
+Self-Improvement
+    ├── Self Journal
+    └── Relevant Cognitive Activity
+
+Open Contemplation
+    └── Selected available context
+```
+
+The exact context sources will evolve as the system develops.
+
+The central principle is that cognitive jobs should operate on small, relevant context rather than the entire Cognitive Journal.
 
 ---
 
-### Cognitive LLM
+# Cognitive LLM
 
 Provides the language-model interface for the Cognitive Engine.
 
@@ -262,63 +404,185 @@ Separating the language-model interface from the cognitive jobs allows different
 
 ---
 
-### Cognitive Log
+# Consolidation
 
-The Cognitive Log is the working journal of the Cognitive Engine.
+Consolidation transforms working cognition into canonical understanding.
 
-Every cognitive job records its reflection in the Cognitive Log.
+It reads relevant Cognitive Journals and identifies information that is:
 
-The log is append-only and serves as temporary working memory until later consolidation into long-term memory.
+* Stable
+* Repeated
+* Significant
+* Actionable
+* Appropriate for long-term retention
 
-Current implementation records placeholder reflections through the CognitiveLLM abstraction.
+It then updates the appropriate Canonical Memory documents.
 
-Future versions will record genuine model-generated reasoning.
+Consolidation does not simply copy journal entries into memory.
+
+It distills working reflections into current understanding.
 
 ---
 
-### MemoryManager
+# Canonical Memory
 
-MemoryManager maintains long-term knowledge.
+Canonical Memory represents the current understanding of the system.
 
-Future responsibilities include:
+It is not a chronological journal.
 
-* Creating memories
-* Consolidating memories
-* Updating canonical knowledge
-* Removing obsolete information
-* Organizing persistent knowledge
+It consists of living documents describing what the system currently understands.
 
-Unlike MemoryRetriever, MemoryManager never participates in conversations.
+The initial canonical domains are:
+
+* User
+* Projects
+* Self
+
+The Conversation Archive remains the authoritative record of conversations, so a separate canonical Conversation Memory is not currently required.
+
+---
+
+## Canonical User Memory
+
+Contains stable understanding of the user.
+
+Examples include:
+
+* Long-term goals
+* Persistent preferences
+* Established habits
+* Important patterns
+* Relevant relationships
+* Durable interests
+
+---
+
+## Canonical Project Memory
+
+Contains the current understanding of projects.
+
+Examples include:
+
+* Project purpose
+* Current status
+* Major decisions
+* Known obstacles
+* Priorities
+* Dependencies
+* Current direction
+
+---
+
+## Canonical Self Memory
+
+Contains stable understanding of the Cognitive Engine itself.
+
+Examples include:
+
+* Established reasoning patterns
+* Known weaknesses
+* Successful strategies
+* Behavioral tendencies
+* Architectural self-understanding
+* Improvements that have become part of normal operation
 
 ---
 
 # Memory Architecture
 
-The two programs communicate only through shared persistent knowledge.
+The system has three conceptual memory layers:
 
 ```text
-Conversation Interface
+Conversation Archive
         │
         ▼
-MemoryRetriever
+Cognitive Journals
         │
         ▼
-Long-Term Memory Store
-        ▲
-        │
-MemoryManager
-        ▲
-        │
-Cognitive Engine
+Canonical Memory
 ```
 
-This establishes a strict architectural boundary.
+Their responsibilities are distinct.
 
-The Conversation Interface only reads memory.
+### Conversation Archive
 
-The Cognitive Engine only writes and maintains memory.
+```text
+What happened?
+```
 
-Neither program directly invokes the other.
+### Cognitive Journals
+
+```text
+What am I thinking about what happened?
+```
+
+### Canonical Memory
+
+```text
+What do I currently understand because of it?
+```
+
+This separation prevents experience, active reflection, and stable knowledge from becoming one undifferentiated memory store.
+
+---
+
+# Memory Flow
+
+```text
+Conversation
+      │
+      ▼
+Conversation Journal
+      │
+      ├──────────────► User Journal
+      │
+      ├──────────────► Project Journal
+      │
+      ├──────────────► Self Journal
+      │
+      └──────────────► Open Contemplation Journal
+                              │
+                              ▼
+                       Consolidation
+                              │
+             ┌────────────────┼────────────────┐
+             ▼                ▼                ▼
+        User Memory     Project Memory     Self Memory
+```
+
+The Cognitive Engine transforms experience into reflection and eventually into canonical understanding.
+
+The Conversation Interface reads canonical knowledge and relevant recent cognitive activity.
+
+The Conversation Interface never modifies cognitive journals or canonical memory.
+
+---
+
+# Context Retrieval Architecture
+
+A Context Retriever has one responsibility:
+
+Retrieve one specific category of information.
+
+Possible retrievers include:
+
+* Conversation History
+* Conversation Journal
+* User Journal
+* Project Journal
+* Self Journal
+* Open Contemplation Journal
+* Canonical User Memory
+* Canonical Project Memory
+* Canonical Self Memory
+* Workspace Configuration
+* Future Context Providers
+
+Each retriever is independent and replaceable.
+
+Retrievers never perform reasoning.
+
+They only retrieve information.
 
 ---
 
@@ -345,32 +609,97 @@ Neither program directly invokes the other.
 * ✅ Execution timing
 * ✅ Cognitive Log
 * ✅ End-to-end Cognitive Pipeline
+* ✅ Recent-context Cognitive Log retrieval
 
 ---
 
-## Current Milestone
+# Current Milestone
 
-Building contextual cognition.
+## Organize Cognitive Working Memory
 
-The Cognitive Engine now performs genuine autonomous reflections using local language models.
+The Cognitive Engine has demonstrated that it can:
 
-Current work is focused on providing each cognitive job with the appropriate context so its reflections are grounded in evidence rather than generic reasoning.
+* Observe conversations.
+* Build cognitive prompts.
+* Generate reflections with a local model.
+* Record reflections persistently.
+* Retrieve recent cognitive activity.
+
+The next implementation milestone is to replace the current single Cognitive Log with the five specialized Cognitive Journals:
+
+* Conversation Journal
+* User Journal
+* Project Journal
+* Self Journal
+* Open Contemplation Journal
+
+Each cognitive job will write only to its corresponding journal.
+
+Each job will retrieve only the recent and relevant context required for its task.
+
+This will reduce prompt size, reduce cognitive noise, and make local-model processing more efficient.
 
 ---
 
-## Next Milestone
+# Next Implementation Steps
 
-Provide each cognitive job with meaningful context.
+### 1. Create the Five Cognitive Journals
 
-Examples include:
+Establish persistent Markdown storage for:
 
-* Recent conversations
-* Active projects
-* User knowledge
-* Recent cognitive log entries
-* Long-term memory
+* Conversation reflections
+* User reflections
+* Project reflections
+* Self reflections
+* Open contemplation
 
-Once each job has access to appropriate context, the scheduler will transition from accelerated testing intervals to its intended production schedule.
+---
+
+### 2. Create Journal Retrievers
+
+Create focused Context Retrievers capable of retrieving recent entries from each journal.
+
+Retrievers should remain independent and reusable.
+
+---
+
+### 3. Update Cognitive Jobs
+
+Modify each cognitive job so that it:
+
+1. Retrieves its appropriate context.
+2. Builds its focused prompt.
+3. Generates one reflection.
+4. Writes that reflection to its corresponding journal.
+
+---
+
+### 4. Implement Canonical Memory
+
+Create the initial canonical memory domains:
+
+* User
+* Projects
+* Self
+
+---
+
+### 5. Implement Consolidation
+
+Create the Consolidation process that reads the specialized Cognitive Journals and distills stable understanding into Canonical Memory.
+
+---
+
+### 6. Update Conversation Context
+
+Expand the Conversation Interface so it can selectively retrieve relevant canonical knowledge and recent cognitive activity.
+
+---
+
+### 7. Transition to Production Scheduling
+
+Once the cognitive pipeline operates efficiently with focused context, transition the Scheduler from accelerated development intervals to its intended production schedule.
+
 ---
 
 # Long-Term Roadmap
@@ -390,30 +719,49 @@ Once each job has access to appropriate context, the scheduler will transition f
 * Scheduler
 * Cognitive Jobs
 * Cognitive Prompt Builder
+* Cognitive LLM
 * Cognitive Log
 * Independent execution
+* End-to-end cognitive pipeline
 
 ---
 
-## Phase 3 — Memory Architecture 🚧
+## Phase 3 — Cognitive Working Memory 🚧
 
-* Language-model reflections
+* Conversation Journal
+* User Journal
+* Project Journal
+* Self Journal
+* Open Contemplation Journal
+* Specialized journal retrievers
+* Focused cognitive context
+* Job-specific context retrieval
+
+---
+
+## Phase 4 — Canonical Memory
+
+* Canonical User Memory
+* Canonical Project Memory
+* Canonical Self Memory
 * MemoryManager
-* Long-Term Memory Store
 * Memory consolidation
-* Canonical memory documents
+* Canonical knowledge refinement
 
 ---
 
-## Phase 4 — Autonomous Cognition
+## Phase 5 — Autonomous Cognition
 
 * Continuous background cognition
 * Reflection pipeline
+* Selective context retrieval
 * Memory refinement
 * Project understanding
 * User understanding
 * Self-improvement
+* Open contemplation
 * Multiple local cognitive models
+* Production scheduling
 
 ---
 
@@ -429,6 +777,16 @@ The Conversation Interface consumes knowledge.
 
 The Cognitive Engine produces knowledge.
 
-Neither program is responsible for the work of the other.
+Retrievers retrieve.
+
+Prompt Builders assemble.
+
+Language Models reason.
+
+Cognitive Journals hold working cognition.
+
+Canonical Memory holds current understanding.
+
+Consolidation transforms reflection into knowledge.
 
 Intelligence is expected to emerge from the interaction of independent cognitive processes operating over a persistent body of shared knowledge.
