@@ -1,9 +1,10 @@
 # Environment
 source .venv/bin/activate
-python app.py
+
 
 # Initializing
 python -m backend.cognitive_engine
+python app.py
 
 # Git
 git status

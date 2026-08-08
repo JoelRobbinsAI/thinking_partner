@@ -1,4 +1,4 @@
-from backend.cognitive_log import CognitiveLog
+from backend.cognitive_journal import CognitiveJournal
 from backend.cognitive_prompt_builder import CognitivePromptBuilder
 from backend.cognitive_llm import CognitiveLLM
 from backend.conversation_context_retriever import (
@@ -6,16 +6,36 @@ from backend.conversation_context_retriever import (
 )
 from backend.config import load_workspace
 
+
 workspace = load_workspace(
     "config/workspaces/clinical.yaml"
 )
 
-log = CognitiveLog()
 builder = CognitivePromptBuilder()
 llm = CognitiveLLM()
 
 conversation_context = ConversationContextRetriever(
     workspace.workspace + "/conversations"
+)
+
+conversation_journal = CognitiveJournal(
+    "conversation.md"
+)
+
+project_journal = CognitiveJournal(
+    "projects.md"
+)
+
+user_journal = CognitiveJournal(
+    "user.md"
+)
+
+self_journal = CognitiveJournal(
+    "self.md"
+)
+
+open_contemplation_journal = CognitiveJournal(
+    "open_contemplation.md"
 )
 
 
@@ -26,7 +46,7 @@ class ConversationUnderstanding:
     reasoning_instructions = """
 Prioritize the Conversation Context.
 
-Use the Cognitive Log only as supporting background.
+Use the recent Conversation Journal entries as supporting background.
 
 Focus on understanding:
 
@@ -43,10 +63,17 @@ Focus on understanding:
                     "Conversation Context",
                     conversation_context.retrieve(),
                 ),
+                (
+                    "Conversation Journal",
+                    conversation_journal.read_recent(),
+                ),
             ],
         )
         reflection = llm.generate(prompt)
-        log.append(self.job, reflection)
+        conversation_journal.append(
+            self.job,
+            reflection,
+        )
 
 
 class ProjectUnderstanding:
@@ -56,9 +83,10 @@ class ProjectUnderstanding:
     reasoning_instructions = """
 Prioritize Project Context.
 
-Until Project Context exists, use the Cognitive Log as background.
+Use recent Project Journal entries as supporting background.
 
 Focus on:
+
 - Active projects.
 - Progress.
 - Obstacles.
@@ -70,13 +98,17 @@ Focus on:
             self,
             [
                 (
-                    "Cognitive Log",
-                    log.read(),
+                    "Project Journal",
+                    project_journal.read_recent(),
                 ),
             ],
         )
+        print(prompt)
         reflection = llm.generate(prompt)
-        log.append(self.job, reflection)
+        project_journal.append(
+            self.job,
+            reflection,
+        )
 
 
 class UserUnderstanding:
@@ -86,9 +118,10 @@ class UserUnderstanding:
     reasoning_instructions = """
 Prioritize User Context.
 
-Until User Context exists, use the Cognitive Log as background.
+Use recent User Journal entries as supporting background.
 
 Focus on:
+
 - Goals.
 - Preferences.
 - Habits.
@@ -100,13 +133,16 @@ Focus on:
             self,
             [
                 (
-                    "Cognitive Log",
-                    log.read(),
+                    "User Journal",
+                    user_journal.read_recent(),
                 ),
             ],
         )
         reflection = llm.generate(prompt)
-        log.append(self.job, reflection)
+        user_journal.append(
+            self.job,
+            reflection,
+        )
 
 
 class SelfImprovement:
@@ -114,11 +150,12 @@ class SelfImprovement:
     object_of_attention = "My own reasoning"
 
     reasoning_instructions = """
-Prioritize the Cognitive Log.
+Prioritize the Self Journal.
 
 Reflect on the quality of previous reasoning.
 
 Look for:
+
 - Mistakes.
 - Missed opportunities.
 - Better reasoning strategies.
@@ -129,13 +166,16 @@ Look for:
             self,
             [
                 (
-                    "Cognitive Log",
-                    log.read(),
+                    "Self Journal",
+                    self_journal.read_recent(),
                 ),
             ],
         )
         reflection = llm.generate(prompt)
-        log.append(self.job, reflection)
+        self_journal.append(
+            self.job,
+            reflection,
+        )
 
 
 class OpenContemplation:
@@ -143,7 +183,7 @@ class OpenContemplation:
     object_of_attention = "Anything not already addressed"
 
     reasoning_instructions = """
-Use all available context.
+Use the available cognitive context.
 
 Explore ideas, relationships, and questions that were not addressed by the other cognitive jobs.
 """
@@ -153,13 +193,32 @@ Explore ideas, relationships, and questions that were not addressed by the other
             self,
             [
                 (
-                    "Cognitive Log",
-                    log.read(),
+                    "Conversation Journal",
+                    conversation_journal.read_recent(),
+                ),
+                (
+                    "User Journal",
+                    user_journal.read_recent(),
+                ),
+                (
+                    "Project Journal",
+                    project_journal.read_recent(),
+                ),
+                (
+                    "Self Journal",
+                    self_journal.read_recent(),
+                ),
+                (
+                    "Open Contemplation Journal",
+                    open_contemplation_journal.read_recent(),
                 ),
             ],
         )
         reflection = llm.generate(prompt)
-        log.append(self.job, reflection)
+        open_contemplation_journal.append(
+            self.job,
+            reflection,
+        )
 
 
 class Consolidation:
@@ -167,27 +226,41 @@ class Consolidation:
     object_of_attention = "Working memory"
 
     reasoning_instructions = """
-Integrate information across all available context.
+Integrate information across the Cognitive Journals.
 
 Look for:
 
 - Stable knowledge.
 - Repeated patterns.
 - Information that should eventually become canonical memory.
-  """
+"""
 
     def run(self):
         prompt = builder.build(
             self,
             [
                 (
-                    "Cognitive Log",
-                    log.read(),
+                    "Conversation Journal",
+                    conversation_journal.read_recent(),
+                ),
+                (
+                    "User Journal",
+                    user_journal.read_recent(),
+                ),
+                (
+                    "Project Journal",
+                    project_journal.read_recent(),
+                ),
+                (
+                    "Self Journal",
+                    self_journal.read_recent(),
+                ),
+                (
+                    "Open Contemplation Journal",
+                    open_contemplation_journal.read_recent(),
                 ),
             ],
         )
-
         print(prompt)
 
         reflection = llm.generate(prompt)
-        log.append(self.job, reflection)
