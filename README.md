@@ -184,7 +184,7 @@ Scheduler
 Cognitive Jobs
         │
         ▼
-Context Retrievers
+Focused Context
         │
         ▼
 Cognitive Prompt Builder
@@ -193,7 +193,7 @@ Cognitive Prompt Builder
 Cognitive LLM
         │
         ▼
-Specialized Cognitive Journal
+Specialized Cognitive Journals
         │
         ▼
 Consolidation
@@ -208,17 +208,45 @@ Canonical Memory
 
 The Scheduler is the heartbeat of the Cognitive Engine.
 
-It continuously monitors the clock and determines when cognitive work should occur.
+It coordinates cognitive jobs sequentially.
 
-Only one cognitive job is permitted to execute at a time.
+The scheduler does not use wall-clock slots to select individual jobs. Each job must complete before the next job begins.
 
-The scheduler itself performs no reasoning.
+The current development sequence is:
 
-Its only responsibility is coordinating when cognitive jobs begin.
+```text
+Conversation Understanding
+        ↓
+Project Understanding
+        ↓
+User Understanding
+        ↓
+Self-Improvement
+        ↓
+Open Contemplation
+        ↓
+Cycle Complete
+```
 
-During development the scheduler currently uses short timed intervals for testing.
+After every fourth complete cycle, Consolidation runs:
 
-Future versions will execute jobs according to a production schedule.
+```text
+Conversation Understanding
+        ↓
+Project Understanding
+        ↓
+User Understanding
+        ↓
+Self-Improvement
+        ↓
+Open Contemplation
+        ↓
+Consolidation
+```
+
+This accelerated sequential configuration is intended for development and testing.
+
+The production scheduler will eventually introduce longer intervals between cognitive operations while preserving the sequential processing model.
 
 ---
 
@@ -259,11 +287,13 @@ The five working journals are:
 * Self Journal
 * Open Contemplation Journal
 
-These journals are the working-memory layer of the Cognitive Engine.
+These journals form the working-memory layer of the Cognitive Engine.
 
 Each journal contains reflections relevant to one cognitive domain.
 
 The journals allow the Cognitive Engine to process small, focused bodies of recent cognition rather than repeatedly processing the entire cognitive history.
+
+The previous single `cognitive_log.md` working-memory model has been replaced by this specialized journal architecture.
 
 ---
 
@@ -349,40 +379,56 @@ Open Contemplation provides a place for useful cognition before its permanent de
 
 ---
 
+# Cognitive Journal
+
+The reusable `CognitiveJournal` component provides the persistence mechanism for the specialized journals.
+
+Each journal:
+
+* Stores Markdown entries.
+* Appends new reflections.
+* Retrieves only recent entries.
+* Maintains its own independent file.
+
+The current implementation retrieves a small number of recent entries rather than loading the entire journal.
+
+This keeps cognitive prompts focused and reduces unnecessary local-model processing.
+
+---
+
 # Cognitive Prompt Builder
 
 Constructs prompts for cognitive work.
 
 Its responsibility is completely separate from the PromptBuilder used by the Conversation Interface.
 
-The Cognitive Prompt Builder assembles the question a cognitive job should answer and combines only the context relevant to that job.
+The Cognitive Prompt Builder:
 
-For example:
+* Establishes the global identity of the Cognitive Engine.
+* Defines the current object of attention.
+* Adds job-specific reasoning instructions.
+* Assembles only the supplied context.
+* Enforces artifact-based grounding.
+* Requires the standard three-question reflection.
 
-```text
-Conversation Understanding
-    ├── Recent Conversation
-    └── Recent Conversation Journal
+The Cognitive Engine's global purpose is:
 
-Project Understanding
-    ├── Project Journal
-    └── Relevant Canonical Project Memory
+* Primarily to develop understanding that helps the system better assist its user.
+* Secondarily to develop understanding of its own reasoning and operation.
 
-User Understanding
-    ├── User Journal
-    └── Canonical User Memory
+The Cognitive Engine must learn from persistent artifacts rather than inventing history.
 
-Self-Improvement
-    ├── Self Journal
-    └── Relevant Cognitive Activity
+Its grounding rules explicitly prohibit inventing:
 
-Open Contemplation
-    └── Selected available context
-```
+* Events
+* Projects
+* Conversations
+* Facts
+* People
+* Decisions
+* History
 
-The exact context sources will evolve as the system develops.
-
-The central principle is that cognitive jobs should operate on small, relevant context rather than the entire Cognitive Journal.
+Generated reflections are not automatically treated as facts. A previous model-generated reflection becomes usable evidence only when the architecture explicitly treats it as such.
 
 ---
 
@@ -422,15 +468,19 @@ Consolidation does not simply copy journal entries into memory.
 
 It distills working reflections into current understanding.
 
+The current development scheduler runs Consolidation only after every fourth complete cognitive cycle.
+
+Canonical Memory has not yet been implemented.
+
 ---
 
 # Canonical Memory
 
-Canonical Memory represents the current understanding of the system.
+Canonical Memory will represent the current understanding of the system.
 
-It is not a chronological journal.
+It will not be a chronological journal.
 
-It consists of living documents describing what the system currently understands.
+It will consist of living documents describing what the system currently understands.
 
 The initial canonical domains are:
 
@@ -440,11 +490,13 @@ The initial canonical domains are:
 
 The Conversation Archive remains the authoritative record of conversations, so a separate canonical Conversation Memory is not currently required.
 
+Canonical Memory is the next major architectural layer after the Cognitive Working Memory layer is complete.
+
 ---
 
 ## Canonical User Memory
 
-Contains stable understanding of the user.
+Will contain stable understanding of the user.
 
 Examples include:
 
@@ -459,7 +511,7 @@ Examples include:
 
 ## Canonical Project Memory
 
-Contains the current understanding of projects.
+Will contain the current understanding of projects.
 
 Examples include:
 
@@ -475,7 +527,7 @@ Examples include:
 
 ## Canonical Self Memory
 
-Contains stable understanding of the Cognitive Engine itself.
+Will contain stable understanding of the Cognitive Engine itself.
 
 Examples include:
 
@@ -584,6 +636,8 @@ Retrievers never perform reasoning.
 
 They only retrieve information.
 
+The next implementation step is to create focused retrievers for the five Cognitive Journals so cognitive jobs can request recent journal context through the same modular retrieval architecture used elsewhere in Thinking Partner.
+
 ---
 
 # Current Status
@@ -600,32 +654,51 @@ They only retrieve information.
 * ✅ Secure API key handling
 * ✅ Independent Conversation Interface
 * ✅ Cognitive Engine
-* ✅ Clock-based Scheduler
+* ✅ Sequential Cognitive Scheduler
 * ✅ Cognitive Jobs
 * ✅ Universal Reflection Template
 * ✅ Cognitive Prompt Builder
+* ✅ Global Cognitive Engine identity
+* ✅ Artifact-grounding rules
 * ✅ Cognitive LLM
 * ✅ Ollama integration
 * ✅ Execution timing
-* ✅ Cognitive Log
-* ✅ End-to-end Cognitive Pipeline
-* ✅ Recent-context Cognitive Log retrieval
+* ✅ Five specialized Cognitive Journals
+* ✅ Recent-entry journal retrieval
+* ✅ Each cognitive job writing to its corresponding journal
+* ✅ Sequential cognitive job execution
+* ✅ Fourth-cycle Consolidation trigger
 
 ---
 
 # Current Milestone
 
-## Organize Cognitive Working Memory
+## Complete the Cognitive Working Memory Layer
 
-The Cognitive Engine has demonstrated that it can:
+The Cognitive Engine can now:
 
 * Observe conversations.
 * Build cognitive prompts.
 * Generate reflections with a local model.
 * Record reflections persistently.
-* Retrieve recent cognitive activity.
+* Maintain separate cognitive journals.
+* Retrieve recent entries from each journal.
+* Process cognitive jobs sequentially.
+* Run Consolidation on a longer development cycle.
 
-The next implementation milestone is to replace the current single Cognitive Log with the five specialized Cognitive Journals:
+The current work is focused on making the Cognitive Working Memory layer structurally complete before implementing Canonical Memory.
+
+The immediate objective is to make each cognitive job receive the smallest useful set of relevant evidence through dedicated Context Retrievers.
+
+This should reduce prompt size, reduce cognitive noise, improve grounding, and make local-model processing more efficient.
+
+---
+
+# Next Implementation Steps
+
+### 1. Create Specialized Journal Retrievers
+
+Create focused Context Retrievers for:
 
 * Conversation Journal
 * User Journal
@@ -633,37 +706,11 @@ The next implementation milestone is to replace the current single Cognitive Log
 * Self Journal
 * Open Contemplation Journal
 
-Each cognitive job will write only to its corresponding journal.
-
-Each job will retrieve only the recent and relevant context required for its task.
-
-This will reduce prompt size, reduce cognitive noise, and make local-model processing more efficient.
+Each retriever should retrieve only the recent entries required by the requesting cognitive job.
 
 ---
 
-# Next Implementation Steps
-
-### 1. Create the Five Cognitive Journals
-
-Establish persistent Markdown storage for:
-
-* Conversation reflections
-* User reflections
-* Project reflections
-* Self reflections
-* Open contemplation
-
----
-
-### 2. Create Journal Retrievers
-
-Create focused Context Retrievers capable of retrieving recent entries from each journal.
-
-Retrievers should remain independent and reusable.
-
----
-
-### 3. Update Cognitive Jobs
+### 2. Update Cognitive Jobs to Use Retrievers
 
 Modify each cognitive job so that it:
 
@@ -671,6 +718,16 @@ Modify each cognitive job so that it:
 2. Builds its focused prompt.
 3. Generates one reflection.
 4. Writes that reflection to its corresponding journal.
+
+The jobs should not need to know how journal files are stored.
+
+---
+
+### 3. Establish the Global Conversation Source
+
+Remove the Cognitive Engine's dependency on a specific workspace such as Clinical.
+
+Conversation Understanding should eventually observe the Conversation Archive as a system-level source rather than inheriting a workspace-specific identity or system prompt.
 
 ---
 
@@ -698,7 +755,7 @@ Expand the Conversation Interface so it can selectively retrieve relevant canoni
 
 ### 7. Transition to Production Scheduling
 
-Once the cognitive pipeline operates efficiently with focused context, transition the Scheduler from accelerated development intervals to its intended production schedule.
+Once the cognitive pipeline operates efficiently with focused context, transition the Scheduler from accelerated development execution to its intended production schedule.
 
 ---
 
@@ -733,9 +790,12 @@ Once the cognitive pipeline operates efficiently with focused context, transitio
 * Project Journal
 * Self Journal
 * Open Contemplation Journal
+* Recent-entry journal retrieval
 * Specialized journal retrievers
 * Focused cognitive context
 * Job-specific context retrieval
+* Global Conversation Archive retrieval
+* Sequential cognitive processing
 
 ---
 
@@ -788,5 +848,7 @@ Cognitive Journals hold working cognition.
 Canonical Memory holds current understanding.
 
 Consolidation transforms reflection into knowledge.
+
+The Cognitive Engine must remain grounded in persistent artifacts and must never manufacture experience simply because a plausible story would fit the current context.
 
 Intelligence is expected to emerge from the interaction of independent cognitive processes operating over a persistent body of shared knowledge.
