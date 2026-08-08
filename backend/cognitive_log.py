@@ -13,7 +13,7 @@ class CognitiveLog:
 
         with self.filepath.open(
             "a",
-            encoding="utf-8",
+            encoding="utf-8"
         ) as file:
             file.write(
                 f"# {timestamp}\n\n"
@@ -25,6 +25,13 @@ class CognitiveLog:
         if not self.filepath.exists():
             return ""
 
-        return self.filepath.read_text(
+        content = self.filepath.read_text(
             encoding="utf-8"
         )
+
+        entries = content.split("\n# ")
+
+        if len(entries) <= 1:
+            return content.strip()
+
+        return "# " + entries[-1].strip()
