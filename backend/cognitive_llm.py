@@ -10,6 +10,10 @@ class CognitiveLLM:
     def generate(self, prompt):
         print(f"Thinking with {self.model}...")
 
+        print("\n================ PROMPT ================\n")
+        print(prompt)
+        print("\n============== END PROMPT ==============\n")
+
         start = time.perf_counter()
 
         response = ollama.chat(

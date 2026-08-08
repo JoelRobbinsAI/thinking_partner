@@ -8,5 +8,5 @@ python -m backend.cognitive_engine
 # Git
 git status
 git add .
-git commit -m "
+git commit -m ""
 git push
