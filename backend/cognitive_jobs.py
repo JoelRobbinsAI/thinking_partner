@@ -1,21 +1,16 @@
 from backend.cognitive_journal import CognitiveJournal
+from backend.cognitive_journal_retriever import CognitiveJournalRetriever
 from backend.cognitive_prompt_builder import CognitivePromptBuilder
 from backend.cognitive_llm import CognitiveLLM
 from backend.conversation_context_retriever import (
     ConversationContextRetriever,
-)
-from backend.config import load_workspace
-
-
-workspace = load_workspace(
-    "config/workspaces/clinical.yaml"
 )
 
 builder = CognitivePromptBuilder()
 llm = CognitiveLLM()
 
 conversation_context = ConversationContextRetriever(
-    workspace.workspace + "/conversations"
+    "conversations"
 )
 
 conversation_journal = CognitiveJournal(
@@ -35,6 +30,27 @@ self_journal = CognitiveJournal(
 )
 
 open_contemplation_journal = CognitiveJournal(
+    "open_contemplation.md"
+)
+
+
+conversation_journal_retriever = CognitiveJournalRetriever(
+    "conversation.md"
+)
+
+project_journal_retriever = CognitiveJournalRetriever(
+    "projects.md"
+)
+
+user_journal_retriever = CognitiveJournalRetriever(
+    "user.md"
+)
+
+self_journal_retriever = CognitiveJournalRetriever(
+    "self.md"
+)
+
+open_contemplation_journal_retriever = CognitiveJournalRetriever(
     "open_contemplation.md"
 )
 
@@ -65,11 +81,13 @@ Focus on understanding:
                 ),
                 (
                     "Conversation Journal",
-                    conversation_journal.read_recent(),
+                    conversation_journal_retriever.retrieve(),
                 ),
             ],
         )
+
         reflection = llm.generate(prompt)
+
         conversation_journal.append(
             self.job,
             reflection,
@@ -83,7 +101,10 @@ class ProjectUnderstanding:
     reasoning_instructions = """
 Prioritize Project Context.
 
-Use recent Project Journal entries as supporting background.
+Use the Conversation Journal as the primary source of evidence about
+projects.
+
+Use recent Project Journal entries as supporting working memory.
 
 Focus on:
 
@@ -98,13 +119,18 @@ Focus on:
             self,
             [
                 (
+                    "Conversation Journal",
+                    conversation_journal_retriever.retrieve(),
+                ),
+                (
                     "Project Journal",
-                    project_journal.read_recent(),
+                    project_journal_retriever.retrieve(),
                 ),
             ],
         )
-        print(prompt)
+
         reflection = llm.generate(prompt)
+
         project_journal.append(
             self.job,
             reflection,
@@ -118,7 +144,10 @@ class UserUnderstanding:
     reasoning_instructions = """
 Prioritize User Context.
 
-Use recent User Journal entries as supporting background.
+Use the Conversation Journal as the primary source of evidence about
+the user.
+
+Use recent User Journal entries as supporting working memory.
 
 Focus on:
 
@@ -133,12 +162,18 @@ Focus on:
             self,
             [
                 (
+                    "Conversation Journal",
+                    conversation_journal_retriever.retrieve(),
+                ),
+                (
                     "User Journal",
-                    user_journal.read_recent(),
+                    user_journal_retriever.retrieve(),
                 ),
             ],
         )
+
         reflection = llm.generate(prompt)
+
         user_journal.append(
             self.job,
             reflection,
@@ -152,13 +187,17 @@ class SelfImprovement:
     reasoning_instructions = """
 Prioritize the Self Journal.
 
-Reflect on the quality of previous reasoning.
+Use the Conversation Journal as evidence about actual interactions
+and the quality of the system's behavior.
 
-Look for:
+Use recent Self Journal entries as supporting working memory.
+
+Focus on:
 
 - Mistakes.
 - Missed opportunities.
 - Better reasoning strategies.
+- Improvements to the system's own behavior.
 """
 
     def run(self):
@@ -166,12 +205,18 @@ Look for:
             self,
             [
                 (
+                    "Conversation Journal",
+                    conversation_journal_retriever.retrieve(),
+                ),
+                (
                     "Self Journal",
-                    self_journal.read_recent(),
+                    self_journal_retriever.retrieve(),
                 ),
             ],
         )
+
         reflection = llm.generate(prompt)
+
         self_journal.append(
             self.job,
             reflection,
@@ -185,7 +230,10 @@ class OpenContemplation:
     reasoning_instructions = """
 Use the available cognitive context.
 
-Explore ideas, relationships, and questions that were not addressed by the other cognitive jobs.
+Explore ideas, relationships, and questions that were not addressed
+by the other cognitive jobs.
+
+Remain grounded in the supplied artifacts.
 """
 
     def run(self):
@@ -194,27 +242,29 @@ Explore ideas, relationships, and questions that were not addressed by the other
             [
                 (
                     "Conversation Journal",
-                    conversation_journal.read_recent(),
+                    conversation_journal_retriever.retrieve(),
                 ),
                 (
                     "User Journal",
-                    user_journal.read_recent(),
+                    user_journal_retriever.retrieve(),
                 ),
                 (
                     "Project Journal",
-                    project_journal.read_recent(),
+                    project_journal_retriever.retrieve(),
                 ),
                 (
                     "Self Journal",
-                    self_journal.read_recent(),
+                    self_journal_retriever.retrieve(),
                 ),
                 (
                     "Open Contemplation Journal",
-                    open_contemplation_journal.read_recent(),
+                    open_contemplation_journal_retriever.retrieve(),
                 ),
             ],
         )
+
         reflection = llm.generate(prompt)
+
         open_contemplation_journal.append(
             self.job,
             reflection,
@@ -233,6 +283,8 @@ Look for:
 - Stable knowledge.
 - Repeated patterns.
 - Information that should eventually become canonical memory.
+
+Only retain information supported by the supplied cognitive artifacts.
 """
 
     def run(self):
@@ -241,26 +293,30 @@ Look for:
             [
                 (
                     "Conversation Journal",
-                    conversation_journal.read_recent(),
+                    conversation_journal_retriever.retrieve(),
                 ),
                 (
                     "User Journal",
-                    user_journal.read_recent(),
+                    user_journal_retriever.retrieve(),
                 ),
                 (
                     "Project Journal",
-                    project_journal.read_recent(),
+                    project_journal_retriever.retrieve(),
                 ),
                 (
                     "Self Journal",
-                    self_journal.read_recent(),
+                    self_journal_retriever.retrieve(),
                 ),
                 (
                     "Open Contemplation Journal",
-                    open_contemplation_journal.read_recent(),
+                    open_contemplation_journal_retriever.retrieve(),
                 ),
             ],
         )
-        print(prompt)
 
         reflection = llm.generate(prompt)
+
+        self_journal.append(
+            self.job,
+            reflection,
+        )
