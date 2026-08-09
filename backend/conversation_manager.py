@@ -13,19 +13,22 @@ class ConversationManager:
         )
         self.conversations_dir.mkdir(parents=True, exist_ok=True)
 
-    def create_conversation(self, title="New Conversation"):
+    def create_conversation(self, title="New Conversation", model=None):
         conversation_id = str(uuid4())
         timestamp = datetime.now()
 
         filename = f"{timestamp.strftime('%Y%m%d_%H%M%S')}.md"
         filepath = self.conversations_dir / filename
 
+        # Use provided model, or fall back to workspace.model
+        model_name = model if model else self.workspace.model
+
         content = f"""---
 id: {conversation_id}
 title: {title}
 created: {timestamp.isoformat()}
 workspace: {self.workspace.name}
-model: {self.workspace.model}
+model: {model_name}
 ---
 
 # {title}
@@ -55,16 +58,22 @@ model: {self.workspace.model}
             for line in lines[1:]:
                 if line == "---":
                     break
-
-                key, value = line.split(":", 1)
-                metadata[key.strip()] = value.strip()
+                
+                # Skip empty lines
+                if not line.strip():
+                    continue
+                    
+                # Only process lines with a colon
+                if ":" in line:
+                    key, value = line.split(":", 1)
+                    metadata[key.strip()] = value.strip()
 
         return Conversation(
-            id=metadata["id"],
-            title=metadata["title"],
-            workspace=metadata["workspace"],
-            model=metadata["model"],
-            created=datetime.fromisoformat(metadata["created"]),
+            id=metadata.get("id", ""),
+            title=metadata.get("title", "Untitled"),
+            workspace=metadata.get("workspace", ""),
+            model=metadata.get("model", ""),
+            created=datetime.fromisoformat(metadata.get("created", datetime.now().isoformat())),
             filepath=filepath,
             content=content,
         )

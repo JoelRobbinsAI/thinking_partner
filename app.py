@@ -25,7 +25,7 @@ for i, conversation in enumerate(conversations, start=1):
 choice = input("\nChoice: ").strip()
 
 if choice.upper() == "N":
-    filepath = manager.create_conversation()
+    filepath = manager.create_conversation(model=workspace.model)
     conversation = manager.load_conversation(filepath)
 
 else:

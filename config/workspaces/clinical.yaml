@@ -1,6 +1,6 @@
 name: Clinical
 
-model: deepseek-v4-flash
+model: mistralai/mistral-nemo
 
 system_prompt: prompts/clinical.md
 
