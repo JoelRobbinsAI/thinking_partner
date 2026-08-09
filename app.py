@@ -45,19 +45,38 @@ else:
         raise SystemExit
 
 print(f"\nConversation: {conversation.title}\n")
+print("Type 'exit' or 'quit' to end the conversation.\n")
 
-user_message = input("You: ")
-
-conversation.append_user(user_message)
-
-messages = builder.build(
-    workspace,
-    conversation,
-)
-
-assistant_reply = llm.generate(messages)
-
-conversation.append_assistant(assistant_reply)
+# Multi-turn conversation loop
+while True:
+    user_message = input("You: ").strip()
+    
+    # Check for exit command
+    if user_message.lower() in ['exit', 'quit']:
+        print("\nGoodbye!")
+        break
+    
+    # Skip empty messages
+    if not user_message:
+        continue
+    
+    # Add user message to conversation
+    conversation.append_user(user_message)
+    
+    # Build prompt with context
+    messages = builder.build(
+        workspace,
+        conversation,
+    )
+    
+    # Generate assistant reply
+    assistant_reply = llm.generate(messages)
+    
+    # Add assistant reply to conversation
+    conversation.append_assistant(assistant_reply)
+    
+    # Show the reply
+    print(f"\nAssistant: {assistant_reply}\n")
 
 print("\nUpdated Conversation:\n")
 print(conversation.content)
