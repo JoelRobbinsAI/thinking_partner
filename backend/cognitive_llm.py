@@ -1,11 +1,12 @@
 import time
 
-import ollama
+from backend.llm import OpenRouterLLM
 
 
 class CognitiveLLM:
     def __init__(self):
-        self.model = "phi3:mini"
+        self.model = "mistralai/mistral-nemo"
+        self.llm = OpenRouterLLM(self.model)
 
     def generate(self, prompt):
         print(f"Thinking with {self.model}...")
@@ -16,15 +17,13 @@ class CognitiveLLM:
 
         start = time.perf_counter()
 
-        response = ollama.chat(
-            model=self.model,
-            messages=[
+        reflection = self.llm.generate(
+            [
                 {
                     "role": "user",
                     "content": prompt,
                 }
-            ],
-            think=False,
+            ]
         )
 
         end = time.perf_counter()
@@ -32,10 +31,7 @@ class CognitiveLLM:
         duration = end - start
 
         print(f"Completed in {duration:.2f} seconds.")
-
-        print(response)
-
-        reflection = response["message"]["content"]
+        print(reflection)
 
         return (
             f"Model: {self.model}\n"

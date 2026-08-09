@@ -214,11 +214,12 @@ The Scheduler is the heartbeat of the Cognitive Engine.
 
 It coordinates cognitive jobs sequentially.
 
-The scheduler does not select jobs independently based on wall-clock slots. Each job completes before the next job begins.
+The scheduler does not maintain cognitive cycle state itself. Each job completes before the next job begins.
 
 The current development sequence is:
 
 ```text
+
 Conversation Understanding
         ↓
 Project Understanding
@@ -229,28 +230,7 @@ Self-Improvement
         ↓
 Open Contemplation
         ↓
-Cycle Complete
-```
-
-After every fourth complete cycle, Consolidation runs:
-
-```text
-Conversation Understanding
-        ↓
-Project Understanding
-        ↓
-User Understanding
-        ↓
-Self-Improvement
-        ↓
-Open Contemplation
-        ↓
-Consolidation
-```
-
-The current accelerated sequence is intended for development and testing.
-
-The production scheduler will eventually introduce longer intervals between cognitive operations while preserving sequential processing.
+Consolidation Check
 
 ---
 
@@ -571,9 +551,18 @@ Responsibilities include:
 * Measuring execution time.
 * Remaining independent of the cognitive jobs.
 
-The current implementation uses local language models through Ollama.
+The current implementation uses OpenRouter with Mistral Nemo for cognitive processing.
 
 Separating the language-model interface from the cognitive jobs allows different local or remote models to be substituted without modifying the architecture of the Cognitive Engine.
+
+And in the Cognitive Journal section, we need to document the new rolling consolidation behavior. Add this immediately after the paragraph describing recent-entry retrieval:
+
+## Rolling Consolidation
+
+Cognitive Journals maintain a rolling working-memory structure.
+
+Each journal accumulates new cognitive entries until four unconsolidated entries are available.
+
 
 ---
 

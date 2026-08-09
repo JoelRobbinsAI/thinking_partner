@@ -51,21 +51,41 @@ class CognitivePromptBuilder:
             "people, decisions, or history.\n"
             "Do not infer that something happened merely because it "
             "would be plausible.\n"
-            "Do not treat your previous generated reflections as "
-            "facts unless they are supported by the underlying "
-            "artifacts provided as context.\n"
-            "If the available context does not contain enough evidence "
-            "to answer a question, explicitly state that there is "
-            "insufficient information.\n"
+            "Do not treat previous generated reflections as facts "
+            "unless they are supported by the underlying artifacts "
+            "provided as context.\n"
             "Treat the supplied context as the complete evidence "
-            "available for this reflection.\n\n"
+            "available for this operation.\n\n"
+        )
+
+        output_instructions = getattr(
+            job,
+            "output_instructions",
+            "",
+        ).strip()
+
+        if not output_instructions:
+            output_instructions = (
+                "Answer exactly these three questions:\n\n"
+                "1. What happened?\n\n"
+                "2. What did I learn?\n\n"
+                "3. What should change because of what I learned?\n\n"
+                "Write exactly one short paragraph for each question.\n"
+                "Be concise and specific.\n"
+                "Do not add any other sections, questions, "
+                "explanations, recommendations, summaries, or "
+                "commentary.\n"
+                "Do not create new questions.\n"
+                "Do not repeat information unnecessarily."
+            )
+
+        prompt += (
             "Context Documents:\n\n"
             f"{context}\n\n"
-            "Reflect by answering exactly these three questions:\n\n"
-            "1. What happened?\n\n"
-            "2. What did I learn?\n\n"
-            "3. What should change because of what I learned?\n\n"
-            "Respond only with the completed reflection."
+            "Output Instructions\n"
+            "-------------------\n"
+            f"{output_instructions}\n\n"
+            "Respond only according to these output instructions."
         )
 
         return prompt

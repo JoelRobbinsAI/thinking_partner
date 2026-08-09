@@ -276,47 +276,70 @@ class Consolidation:
     object_of_attention = "Working memory"
 
     reasoning_instructions = """
-Integrate information across the Cognitive Journals.
+    Synthesize the four recent entries from this Cognitive Journal.
 
-Look for:
+    Preserve only information that is supported by the entries.
 
-- Stable knowledge.
-- Repeated patterns.
-- Information that should eventually become canonical memory.
+    Identify the most important stable understanding that should
+    survive into the next working-memory cycle.
 
-Only retain information supported by the supplied cognitive artifacts.
-"""
+    Do not introduce new facts, interpretations, questions,
+    recommendations, or topics that are not supported by the entries.
+    """
+
+    output_instructions = """
+    Write exactly one short paragraph synthesizing the four entries.
+
+    Do not use headings, bullet points, numbered lists, questions,
+    or additional sections.
+
+    The result should be concise enough to function as one working-memory
+    entry.
+    """
 
     def run(self):
-        prompt = builder.build(
-            self,
-            [
-                (
-                    "Conversation Journal",
-                    conversation_journal_retriever.retrieve(),
-                ),
-                (
-                    "User Journal",
-                    user_journal_retriever.retrieve(),
-                ),
-                (
-                    "Project Journal",
-                    project_journal_retriever.retrieve(),
-                ),
-                (
-                    "Self Journal",
-                    self_journal_retriever.retrieve(),
-                ),
-                (
-                    "Open Contemplation Journal",
-                    open_contemplation_journal_retriever.retrieve(),
-                ),
-            ],
-        )
+        journals = [
+            (
+                "Conversation Journal",
+                conversation_journal,
+            ),
+            (
+                "Project Journal",
+                project_journal,
+            ),
+            (
+                "User Journal",
+                user_journal,
+            ),
+            (
+                "Self Journal",
+                self_journal,
+            ),
+            (
+                "Open Contemplation Journal",
+                open_contemplation_journal,
+            ),
+        ]
 
-        reflection = llm.generate(prompt)
+        for title, journal in journals:
+            entries = journal.read_for_consolidation()
 
-        self_journal.append(
-            self.job,
-            reflection,
-        )
+            if not entries:
+                continue
+
+            prompt = builder.build(
+                self,
+                [
+                    (
+                        title,
+                        entries,
+                    ),
+                ],
+            )
+
+            reflection = llm.generate(prompt)
+
+            journal.replace_recent(
+                self.job,
+                reflection,
+            )

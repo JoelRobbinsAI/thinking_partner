@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 import requests
 
+
 load_dotenv()
 
 
@@ -31,5 +32,9 @@ class OpenRouterLLM:
         response.raise_for_status()
 
         data = response.json()
+
+        print("\n========== OPENROUTER RESPONSE ==========")
+        print(data)
+        print("======== END OPENROUTER RESPONSE ========\n")
 
         return data["choices"][0]["message"]["content"]

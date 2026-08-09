@@ -19,7 +19,6 @@ class Scheduler:
         ]
 
         self.consolidation = Consolidation()
-        self.cycle = 0
 
     def start(self):
         print("Starting Scheduler...")
@@ -28,7 +27,4 @@ class Scheduler:
             for job in self.jobs:
                 job.run()
 
-            self.cycle += 1
-
-            if self.cycle % 4 == 0:
-                self.consolidation.run()
+            self.consolidation.run()
