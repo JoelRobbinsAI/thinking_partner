@@ -33,7 +33,6 @@ open_contemplation_journal = CognitiveJournal(
     "open_contemplation.md"
 )
 
-
 conversation_journal_retriever = CognitiveJournalRetriever(
     "conversation.md"
 )
@@ -71,7 +70,7 @@ Focus on understanding:
 - What should change because of what was learned.
 """
 
-    def run(self):
+    def run(self, cycle_id):
         prompt = builder.build(
             self,
             [
@@ -91,6 +90,7 @@ Focus on understanding:
         conversation_journal.append(
             self.job,
             reflection,
+            cycle_id,
         )
 
 
@@ -114,7 +114,7 @@ Focus on:
 - Next priorities.
 """
 
-    def run(self):
+    def run(self, cycle_id):
         prompt = builder.build(
             self,
             [
@@ -134,6 +134,7 @@ Focus on:
         project_journal.append(
             self.job,
             reflection,
+            cycle_id,
         )
 
 
@@ -157,7 +158,7 @@ Focus on:
 - Long-term patterns.
 """
 
-    def run(self):
+    def run(self, cycle_id):
         prompt = builder.build(
             self,
             [
@@ -177,6 +178,7 @@ Focus on:
         user_journal.append(
             self.job,
             reflection,
+            cycle_id,
         )
 
 
@@ -200,7 +202,7 @@ Focus on:
 - Improvements to the system's own behavior.
 """
 
-    def run(self):
+    def run(self, cycle_id):
         prompt = builder.build(
             self,
             [
@@ -220,6 +222,7 @@ Focus on:
         self_journal.append(
             self.job,
             reflection,
+            cycle_id,
         )
 
 
@@ -236,7 +239,7 @@ by the other cognitive jobs.
 Remain grounded in the supplied artifacts.
 """
 
-    def run(self):
+    def run(self, cycle_id):
         prompt = builder.build(
             self,
             [
@@ -268,6 +271,7 @@ Remain grounded in the supplied artifacts.
         open_contemplation_journal.append(
             self.job,
             reflection,
+            cycle_id,
         )
 
 
@@ -276,26 +280,26 @@ class Consolidation:
     object_of_attention = "Working memory"
 
     reasoning_instructions = """
-    Synthesize the four recent entries from this Cognitive Journal.
+Synthesize the four recent entries from this Cognitive Journal.
 
-    Preserve only information that is supported by the entries.
+Preserve only information that is supported by the entries.
 
-    Identify the most important stable understanding that should
-    survive into the next working-memory cycle.
+Identify the most important stable understanding that should
+survive into the next working-memory cycle.
 
-    Do not introduce new facts, interpretations, questions,
-    recommendations, or topics that are not supported by the entries.
-    """
+Do not introduce new facts, interpretations, questions,
+recommendations, or topics that are not supported by the entries.
+"""
 
     output_instructions = """
-    Write exactly one short paragraph synthesizing the four entries.
+Write exactly one short paragraph synthesizing the four entries.
 
-    Do not use headings, bullet points, numbered lists, questions,
-    or additional sections.
+Do not use headings, bullet points, numbered lists, questions,
+or additional sections.
 
-    The result should be concise enough to function as one working-memory
-    entry.
-    """
+The result should be concise enough to function as one working-memory
+entry.
+"""
 
     def run(self):
         journals = [

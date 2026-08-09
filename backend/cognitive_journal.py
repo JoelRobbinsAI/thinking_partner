@@ -6,18 +6,18 @@ class CognitiveJournal:
     def __init__(self, filename):
         self.filepath = Path("cognitive_journals") / filename
 
-    def append(self, job, reflection):
+    def append(self, job, reflection, cycle_id):
         timestamp = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S"
         )
 
         with self.filepath.open(
             "a",
-            encoding="utf-8",
+            encoding="utf-8"
         ) as file:
             file.write(
                 f"# {timestamp}\n\n"
-                f"Job: {job}\n\n"
+                f"Cycle: {cycle_id}\n\n"
                 f"{reflection}\n\n"
             )
 
@@ -40,6 +40,27 @@ class CognitiveJournal:
             if entry.strip()
         ]
 
+    def cycle_ids(self):
+        entries = self._read_entries()
+
+        cycle_ids = []
+
+        for entry in entries:
+            for line in entry.splitlines():
+                if line.startswith("Cycle:"):
+                    value = line.split(
+                        ":", 1
+                    )[1].strip()
+
+                    if value.isdigit():
+                        cycle_ids.append(
+                            int(value)
+                        )
+
+                    break
+
+        return cycle_ids
+
     def read_recent(self, count=2):
         entries = self._read_entries()
 
@@ -56,7 +77,10 @@ class CognitiveJournal:
         last_consolidation = -1
 
         for index, entry in enumerate(entries):
-            if "Job: Consolidation" in entry:
+            if (
+                "Cycle: Consolidation" in entry
+                or "Job: Consolidation" in entry
+            ):
                 last_consolidation = index
 
         return entries[last_consolidation + 1:]
@@ -85,7 +109,10 @@ class CognitiveJournal:
         last_consolidation = -1
 
         for index, entry in enumerate(entries):
-            if "Job: Consolidation" in entry:
+            if (
+                "Cycle: Consolidation" in entry
+                or "Job: Consolidation" in entry
+            ):
                 last_consolidation = index
 
         start = last_consolidation + 1
@@ -105,7 +132,7 @@ class CognitiveJournal:
 
         consolidated_entry = (
             f"{timestamp}\n\n"
-            f"Job: {job}\n\n"
+            f"Cycle: Consolidation\n\n"
             f"{reflection}"
         )
 
