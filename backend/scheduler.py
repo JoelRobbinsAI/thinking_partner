@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from backend.canonical_update_job import CanonicalUpdateJob
+
 from backend.cognitive_jobs import (
     ConversationUnderstanding,
     ProjectUnderstanding,
@@ -12,6 +14,7 @@ from backend.cognitive_jobs import (
 
 from backend.cognitive_journal import CognitiveJournal
 
+print("✅ Scheduler imports loaded")
 
 class Scheduler:
     def __init__(self):
@@ -117,6 +120,19 @@ class Scheduler:
             for name, journal in self.journals.items()
         }
 
+        # Check if any journal has no numeric cycles (only Consolidation entries)
+        has_numeric_cycles = any(cycles for cycles in journal_cycles.values())
+        
+        if not has_numeric_cycles:
+            # All journals only have Consolidation entries, so we're at cycle 1
+            return {
+                "ready": True,
+                "cycle_id": 1,
+                "journal_cycles": journal_cycles,
+                "ahead": [],
+                "behind": [],
+            }
+
         if not all(journal_cycles.values()):
             return {
                 "ready": False,
@@ -165,18 +181,14 @@ class Scheduler:
         return status["ready"]
 
     def start(self):
-        print("Starting Scheduler...")
+        print("🧠 Thinking Partner Scheduler started")
+        print(f"Starting cycle {self.state['cycle_id']}")
 
         while True:
-            # Debug logging
-            print(f"\n=== LOOP START ===")
-            print(f"Current cycle_id: {self.state['cycle_id']}")
-            print(f"Completed jobs: {self.state['completed_jobs']}")
-            
             status = self.synchronization_status()
 
             if status["ahead"]:
-                print("Scheduler stopped: journal is ahead of global cycle.")
+                print("⚠️ Scheduler stopped: journal is ahead of global cycle.")
                 print(status)
                 return
 
@@ -184,33 +196,32 @@ class Scheduler:
                 job_name = job.__class__.__name__
 
                 if job_name in self.state["completed_jobs"]:
-                    print(f"Skipping {job_name} - already completed")
                     continue
 
-                print(f"RUNNING {job_name} for cycle {self.state['cycle_id']}")
+                print(f"  → Running {job_name} (cycle {self.state['cycle_id']})")
                 job.run(self.state["cycle_id"])
 
                 self.state["completed_jobs"].append(job_name)
                 self.save_state()
 
-            print(f"All jobs for cycle {self.state['cycle_id']} completed")
-
             # Move to next cycle or consolidate
-            print(f"Moving from cycle {self.state['cycle_id']} to next phase...")
-            
             if self.state["cycle_id"] == 4:
-                print("Running consolidation...")
+                print(f"  → Consolidating cycle 4...")
                 self.consolidation.run()
-                print("Consolidation complete")
+                print(f"  ✓ Consolidation complete")
+                
+                # Add canonical memory update
+                print(f"  → Updating canonical memory...")
+                canonical_update = CanonicalUpdateJob()
+                canonical_update.run()
+                
                 self.state["cycle_id"] = 1
-                print(f"Reset cycle_id to {self.state['cycle_id']}")
+                print(f"  → Reset cycle_id to 1")
             else:
                 self.state["cycle_id"] += 1
-                print(f"Incremented cycle_id to {self.state['cycle_id']}")
+                print(f"  → Incremented cycle_id to {self.state['cycle_id']}")
 
-            # Clear completed jobs for the new cycle
             self.state["completed_jobs"] = []
             self.save_state()
             
-            print(f"Next cycle will be: {self.state['cycle_id']}")
-            print(f"Completed jobs cleared: {self.state['completed_jobs']}")
+            print(f"  ✓ Cycle complete, next cycle will be {self.state['cycle_id']}")

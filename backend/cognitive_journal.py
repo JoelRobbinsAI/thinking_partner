@@ -15,8 +15,13 @@ class CognitiveJournal:
             "a",
             encoding="utf-8"
         ) as file:
+            # Check if file is empty to avoid double # 
+            if self.filepath.exists() and self.filepath.read_text(encoding="utf-8").strip():
+                file.write(f"\n# {timestamp}\n\n")
+            else:
+                file.write(f"# {timestamp}\n\n")
+            
             file.write(
-                f"# {timestamp}\n\n"
                 f"Cycle: {cycle_id}\n\n"
                 f"{reflection}\n\n"
             )
@@ -32,7 +37,12 @@ class CognitiveJournal:
         if not content.strip():
             return []
 
+        # Split on # that starts a new entry
         entries = content.split("\n# ")
+
+        # Clean up first entry if it has leading #
+        if entries and entries[0].startswith("#"):
+            entries[0] = entries[0][1:].strip()
 
         return [
             entry.strip()
@@ -145,6 +155,7 @@ class CognitiveJournal:
             remaining
         )
 
+        # Write with proper # prefix
         self.filepath.write_text(
             "# " + new_content + "\n",
             encoding="utf-8",

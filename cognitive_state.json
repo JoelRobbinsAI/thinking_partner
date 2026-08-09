@@ -1,9 +1,10 @@
 {
-  "cycle_id": 1,
+  "cycle_id": 4,
   "completed_jobs": [
     "ConversationUnderstanding",
     "ProjectUnderstanding",
     "UserUnderstanding",
-    "SelfImprovement"
+    "SelfImprovement",
+    "OpenContemplation"
   ]
 }
