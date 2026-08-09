@@ -1,7 +1,7 @@
 # Projects Memory
 
 ## Current Projects
-"Discussing cases and refining reasoning workflows for Chinese medicine practice using a Python-based thinking partner tool."
+Discussing cases and refining reasoning workflows for Chinese medicine practice while developing a Python-based thinking partner tool.
 
 ## Project State
 "In progress" (No change)
@@ -16,4 +16,4 @@
 "2026-08-09 15:02:16" (No change)
 
 ---
-*Last updated: 2026-08-09 15:26:31*
+*Last updated: 2026-08-09 17:50:04*

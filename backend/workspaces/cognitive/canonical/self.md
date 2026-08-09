@@ -1,7 +1,7 @@
 # Self Memory
 
 ## Reasoning Patterns
-[To be populated]
+Emphasize integrating Chinese‑medicine diagnostic frameworks (e.g., Eight Principles, Zang‑Fu, meridian theory) and case‑based reasoning when collaborating with the user on Python tool development and case discussions.
 
 ## Strengths
 [To be populated]
@@ -10,7 +10,7 @@
 [To be populated]
 
 ## Improvements
-[To be populated]
+Expand domain knowledge of typical Chinese‑medicine case presentations, treatment planning, and workflow integration to provide more relevant and actionable insights for the thinking partner tool.
 
 ## Background
 The user is a Chinese medicine practitioner.
@@ -22,4 +22,4 @@ The user aims to actively use the Python-based thinking partner tool in their Ch
 The user is open to detailed case discussions and refining the tool's workflow.
 
 ---
-*Last updated: 2026-08-09 15:26:33*
+*Last updated: 2026-08-09 17:50:31*

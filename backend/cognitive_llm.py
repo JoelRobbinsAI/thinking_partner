@@ -8,7 +8,7 @@ class CognitiveLLM:
         # Use the same model as the conversation interface, or fallback
         if model is None:
             # Try to get from environment or use default
-            self.model = os.environ.get("COGNITIVE_MODEL", "openai/gpt-oss-120b")
+            self.model = os.environ.get("COGNITIVE_MODEL", "mistralai/mistral-nemo")
         else:
             self.model = model
         self.llm = OpenRouterLLM(self.model)
