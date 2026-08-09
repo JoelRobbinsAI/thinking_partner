@@ -137,6 +137,7 @@ class Scheduler:
             name
             for name, cycle_id in latest_cycles.items()
             if cycle_id > target_cycle
+            and target_cycle not in journal_cycles[name]
         ]
 
         behind = [
@@ -145,12 +146,9 @@ class Scheduler:
             if cycle_id < target_cycle
         ]
 
-        ready = (
-            len(set(latest_cycles.values())) == 1
-            and all(
-                target_cycle in cycles
-                for cycles in journal_cycles.values()
-            )
+        ready = all(
+            job.__class__.__name__ in self.state["completed_jobs"]
+            for job in self.jobs
         )
 
         return {
@@ -170,13 +168,15 @@ class Scheduler:
         print("Starting Scheduler...")
 
         while True:
+            # Debug logging
+            print(f"\n=== LOOP START ===")
+            print(f"Current cycle_id: {self.state['cycle_id']}")
+            print(f"Completed jobs: {self.state['completed_jobs']}")
+            
             status = self.synchronization_status()
 
             if status["ahead"]:
-                print(
-                    "Scheduler stopped: "
-                    "journal is ahead of global cycle."
-                )
+                print("Scheduler stopped: journal is ahead of global cycle.")
                 print(status)
                 return
 
@@ -184,31 +184,33 @@ class Scheduler:
                 job_name = job.__class__.__name__
 
                 if job_name in self.state["completed_jobs"]:
+                    print(f"Skipping {job_name} - already completed")
                     continue
 
-                job.run(
-                    self.state["cycle_id"]
-                )
+                print(f"RUNNING {job_name} for cycle {self.state['cycle_id']}")
+                job.run(self.state["cycle_id"])
 
-                self.state["completed_jobs"].append(
-                    job_name
-                )
-
+                self.state["completed_jobs"].append(job_name)
                 self.save_state()
 
-            if self.check_synchronization():
-                if self.state["cycle_id"] == 4:
-                    self.consolidation.run()
+            print(f"All jobs for cycle {self.state['cycle_id']} completed")
 
-                    self.state["cycle_id"] = 1
-                else:
-                    self.state["cycle_id"] += 1
+            # Move to next cycle or consolidate
+            print(f"Moving from cycle {self.state['cycle_id']} to next phase...")
+            
+            if self.state["cycle_id"] == 4:
+                print("Running consolidation...")
+                self.consolidation.run()
+                print("Consolidation complete")
+                self.state["cycle_id"] = 1
+                print(f"Reset cycle_id to {self.state['cycle_id']}")
             else:
                 self.state["cycle_id"] += 1
+                print(f"Incremented cycle_id to {self.state['cycle_id']}")
 
+            # Clear completed jobs for the new cycle
             self.state["completed_jobs"] = []
-
             self.save_state()
-
-            self.rebuild_completed_jobs()
-            self.save_state()
+            
+            print(f"Next cycle will be: {self.state['cycle_id']}")
+            print(f"Completed jobs cleared: {self.state['completed_jobs']}")
