@@ -1,3 +1,4 @@
+# backend/prompt_builder.py
 from pathlib import Path
 
 from backend.memory_retriever import MemoryRetriever
@@ -18,10 +19,12 @@ class PromptBuilder:
         # Get canonical memory summary
         canonical_context = self.canonical_retriever.get_canonical_summary()
 
-        # Read system prompt
-        system_prompt = Path(
-            workspace.system_prompt
-        ).read_text()
+        # Get system prompt
+        system_prompt = workspace.system_prompt
+        
+        # If system_prompt looks like a file path, read it
+        if system_prompt and Path(system_prompt).exists():
+            system_prompt = Path(system_prompt).read_text()
 
         # Add memories if they exist
         if memories:

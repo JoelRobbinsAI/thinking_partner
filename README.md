@@ -67,8 +67,41 @@ The Conversation Interface is responsible only for communicating with the user.
 
 It consumes knowledge but does not create or modify long-term cognitive knowledge.
 
+### Workspace Management
+
+The Conversation Interface supports multiple workspaces, each with its own:
+- Configuration (model, system prompt)
+- Conversation archive
+- Cognitive journals
+- Canonical memory
+
+**Workspace selection** at startup:
+- Interactive menu showing available workspaces
+- Remembers the last used workspace
+- Option to create new workspaces
+
+**Conversation management** per workspace:
+- List recent conversations
+- Load existing conversations
+- Start new conversations
+- Persistent storage in Markdown files
+
+**Runtime commands:**
+- `/workspace [name]` - Switch workspaces during a conversation
+- `/workspaces` - List available workspaces
+- `/new` - Start a new conversation
+- `/conversations` - List conversations in current workspace
+- `/load [id]` - Load a specific conversation
+- `/exit` or `/quit` - Exit the program
+
 ```text
 User
+   │
+   ▼
+Workspace Selection
+   │
+   ▼
+Conversation Selection
    │
    ▼
 PromptBuilder
@@ -415,6 +448,8 @@ OPENROUTER_API_KEY=your-api-key-here
 python app.py
 ```
 
+The app will present an interactive menu to select a workspace and conversation.
+
 ### Cognitive Engine
 ```bash
 # Production mode (real timing)
@@ -439,6 +474,9 @@ python -m backend.scheduler --dev
 - MemoryRetriever
 - CanonicalMemoryRetriever
 - Multi-turn conversation loop
+- **Interactive workspace selection with last-used memory**
+- **Runtime workspace switching**
+- **Conversation loading and listing**
 
 ## Phase 2 — Cognitive Engine Foundation ✅
 - Cognitive Scheduler with three modes
