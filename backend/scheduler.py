@@ -32,21 +32,18 @@ class Scheduler:
             # Test mode: compressed timing (in seconds)
             self.job_times = [0, 3, 6, 9, 12]  # Seconds within each hour
             self.consolidation_times = [15, 18, 21, 24, 27]  # Seconds within hour 4
-            self.hour_duration = 30  # 30 seconds per hour
             self.use_seconds = True
             print("🧪 TEST MODE: Timing compressed (seconds)")
         elif mode == "development":
             # Development mode: run immediately
             self.job_times = [0, 0, 0, 0, 0]
             self.consolidation_times = [0, 0, 0, 0, 0]
-            self.hour_duration = 0
             self.use_seconds = True
             print("🛠️ DEVELOPMENT MODE: No waiting")
         else:
             # Production mode: real timing (in minutes)
             self.job_times = [0, 5, 10, 15, 20]  # Minutes within each hour
             self.consolidation_times = [25, 30, 35, 40, 45]  # Minutes within hour 4
-            self.hour_duration = 60  # 60 minutes per hour
             self.use_seconds = False
             print("🚀 PRODUCTION MODE: Real timing")
         
@@ -89,8 +86,10 @@ class Scheduler:
             return {
                 "cycle_id": 1,
                 "completed_jobs": [],
+                "completed_consolidations": [],
                 "cycle_start_time": datetime.now().isoformat(),
                 "hour": 1,
+                "phase": "jobs",  # "jobs" or "consolidation"
             }
 
         return json.loads(self.state_path.read_text(encoding="utf-8"))
@@ -123,6 +122,7 @@ class Scheduler:
         if latest_cycle > self.state["cycle_id"]:
             self.state["cycle_id"] = latest_cycle
             self.state["completed_jobs"] = []
+            self.state["completed_consolidations"] = []
 
     def rebuild_completed_jobs(self):
         cycle_id = self.state["cycle_id"]
@@ -230,44 +230,119 @@ class Scheduler:
         print(f"  Mode: {self.mode}")
         print(f"  Starting cycle {self.state['cycle_id']}")
         print(f"  Hour: {self.state.get('hour', 1)}")
+        print(f"  Phase: {self.state.get('phase', 'jobs')}")
 
         while True:
             hour = self.state.get("hour", 1)
-            completed_jobs = self.state.get("completed_jobs", [])
+            phase = self.state.get("phase", "jobs")
             
-            # Check if all journals have cycle 4 and we're in hour 4
-            all_cycles_4 = all(
-                cycle_id in journal.cycle_ids()
-                for cycle_id, journal in zip([4]*5, self.journals.values())
-            )
+            # Check if we should be in consolidation phase (only in hour 4)
+            if hour == 4 and phase == "jobs":
+                # Check if all jobs for this hour are complete
+                completed_jobs = self.state.get("completed_jobs", [])
+                # Check if ALL 5 jobs are complete
+                all_jobs_complete = all(
+                    job.__class__.__name__ in completed_jobs
+                    for job in self.jobs
+                )
+                if all_jobs_complete:
+                    print("  ✅ All jobs complete for hour 4. Moving to consolidation phase.")
+                    self.state["phase"] = "consolidation"
+                    self.state["completed_consolidations"] = []
+                    self.save_state()
+                    phase = "consolidation"
             
-            if hour == 4 and all_cycles_4 and len(self.state.get("completed_consolidations", [])) < 5:
-                self.run_consolidation_phase()
-                continue
-            
-            if hour == 4 and all_cycles_4 and len(self.state.get("completed_consolidations", [])) >= 5:
-                # All done, reset
-                print("  ✅ Full cycle complete. Resetting to cycle 1")
-                self.state["cycle_id"] = 1
-                self.state["hour"] = 1
-                self.state["completed_jobs"] = []
-                self.state["completed_consolidations"] = []
-                self.state["cycle_start_time"] = datetime.now().isoformat()
+            # Handle consolidation phase (still in hour 4)
+            if phase == "consolidation":
+                completed_consolidations = self.state.get("completed_consolidations", [])
+                
+                # Check if all consolidations are done
+                if len(completed_consolidations) >= 5:
+                    # All done, reset to cycle 1, hour 1
+                    print("  ✅ All consolidations complete. Resetting to cycle 1, hour 1")
+                    self.state["cycle_id"] = 1
+                    self.state["hour"] = 1
+                    self.state["phase"] = "jobs"
+                    self.state["completed_jobs"] = []
+                    self.state["completed_consolidations"] = []
+                    self.state["cycle_start_time"] = datetime.now().isoformat()
+                    self.save_state()
+                    continue
+                
+                # Run the next consolidation
+                consolidation_index = len(completed_consolidations)
+                
+                # Wait until this consolidation's scheduled time
+                target_time = self.consolidation_times[consolidation_index]
+                self.wait_until_next_minute(target_time)
+                
+                job_name = self.jobs[consolidation_index].__class__.__name__
+                
+                print(f"  → Consolidating {job_name} journal (cycle {self.state['cycle_id']}, hour 4)...")
+                self.consolidation.run()
+                print("  ✓ Consolidation complete")
+                
+                print(f"  → Updating canonical memory for {job_name}...")
+                canonical_update = CanonicalUpdateJob()
+                canonical_update.run()
+                print("  ✓ Canonical update complete")
+                
+                self.state["completed_consolidations"].append(job_name)
                 self.save_state()
                 continue
             
-            # Regular job scheduling
+            # Regular job scheduling (hours 1-4)
+            completed_jobs = self.state.get("completed_jobs", [])
+            
+            # 🔍 RECOVERY: Check if any journal is missing the current cycle
+            missing_jobs = []
+            for job in self.jobs:
+                job_name = job.__class__.__name__
+                journal = self.journals[job_name]
+                if self.state["cycle_id"] not in journal.cycle_ids():
+                    missing_jobs.append(job_name)
+            
+            if missing_jobs:
+                print(f"  ⚠️ Missing cycle {self.state['cycle_id']} in journals: {missing_jobs}")
+                # Remove missing jobs from completed_jobs so they'll run
+                for missing in missing_jobs:
+                    if missing in completed_jobs:
+                        completed_jobs.remove(missing)
+                        print(f"  🔄 Removed {missing} from completed_jobs (will retry)")
+                        self.state["completed_jobs"] = completed_jobs
+                        self.save_state()
+            
+            # Check if all jobs for this hour are complete
+            all_jobs_complete = all(
+                job.__class__.__name__ in self.state["completed_jobs"]
+                for job in self.jobs
+            )
+            
+            if all_jobs_complete:
+                if hour < 4:
+                    # Move to next hour - increment both hour AND cycle_id
+                    self.state["hour"] = hour + 1
+                    self.state["cycle_id"] = hour + 1
+                    self.state["completed_jobs"] = []
+                    self.save_state()
+                    print(f"  → Moved to hour {self.state['hour']} (cycle {self.state['cycle_id']})")
+                    continue
+                else:
+                    # Hour 4 complete - will move to consolidation in next loop
+                    continue
+            
+            # Run jobs for this hour
             status = self.synchronization_status()
             if status["ahead"]:
                 print("⚠️ Scheduler stopped: journal is ahead of global cycle.")
                 print(status)
                 return
             
-            # Check which jobs need to run
+            # Find the next job to run
             for i, job in enumerate(self.jobs):
                 job_name = job.__class__.__name__
                 
-                if job_name in completed_jobs:
+                if job_name in self.state["completed_jobs"]:
                     continue
                 
                 # Wait until this job's scheduled time
@@ -278,50 +353,18 @@ class Scheduler:
                 print(f"  → Running {job_name} (cycle {self.state['cycle_id']}, hour {hour}) at {datetime.now().strftime('%H:%M:%S')}")
                 job.run(self.state["cycle_id"])
                 
+                # Verify the journal was actually written
+                journal = self.journals[job_name]
+                if self.state["cycle_id"] in journal.cycle_ids():
+                    print(f"  ✅ Journal {job_name} confirmed with cycle {self.state['cycle_id']}")
+                else:
+                    print(f"  ❌ ERROR: Journal {job_name} was NOT written! Will retry next loop.")
+                    # Don't mark as complete - it will retry
+                    continue
+                
                 self.state["completed_jobs"].append(job_name)
                 self.save_state()
-                break  # Only run one job per loop
-            
-            # Check if all jobs for this hour are complete
-            if len(self.state["completed_jobs"]) >= 5:
-                if hour == 4:
-                    # Hour 4 complete, move to consolidation
-                    print("  ✅ Hour 4 complete. Moving to consolidation phase.")
-                    self.state["completed_consolidations"] = []
-                    self.save_state()
-                else:
-                    # Move to next hour
-                    self.state["hour"] = hour + 1
-                    self.state["cycle_id"] = hour + 1
-                    self.state["completed_jobs"] = []
-                    self.save_state()
-                    print(f"  → Moved to hour {self.state['hour']} (cycle {self.state['cycle_id']})")
-
-    def run_consolidation_phase(self):
-        """Run consolidations."""
-        completed_consolidations = self.state.get("completed_consolidations", [])
-        consolidation_index = len(completed_consolidations)
-        
-        if consolidation_index >= 5:
-            return
-        
-        # Wait until this consolidation's scheduled time
-        target_time = self.consolidation_times[consolidation_index]
-        self.wait_until_next_minute(target_time)
-        
-        job_name = self.jobs[consolidation_index].__class__.__name__
-        
-        print(f"  → Consolidating {job_name} journal...")
-        self.consolidation.run()
-        print("  ✓ Consolidation complete")
-        
-        print(f"  → Updating canonical memory for {job_name}...")
-        canonical_update = CanonicalUpdateJob()
-        canonical_update.run()
-        print("  ✓ Canonical update complete")
-        
-        self.state["completed_consolidations"].append(job_name)
-        self.save_state()
+                break  # Only run one job per loop iteration
 
 def main():
     import sys

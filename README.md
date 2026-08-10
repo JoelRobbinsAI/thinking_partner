@@ -1,4 +1,3 @@
-
 # Thinking Partner
 
 A personal AI Thinking Partner built around persistent conversations, modular cognition, reflection, and long-term memory.
@@ -190,6 +189,7 @@ python -m backend.scheduler
 - Real timing: 5 minutes between jobs, 4-hour cycle
 - Consolidation at minutes 25, 30, 35, 40, 45 of hour 4
 - Designed for continuous background operation
+- Syncs to system clock for precise timing
 
 #### Test Mode
 ```bash
@@ -233,6 +233,15 @@ python -m backend.scheduler --dev
 - Repeat indefinitely
 
 The scheduler persists its state in `cognitive_state.json`, allowing it to resume from where it left off if interrupted.
+
+### Scheduler Recovery
+
+The scheduler includes robust recovery mechanisms:
+
+- **Uneven state recovery**: If journals have different cycle counts (e.g., from stopping mid-cycle), the scheduler detects missing entries and reruns the appropriate jobs.
+- **Verification after job runs**: Confirms each journal was written before marking a job complete.
+- **State reconciliation**: On restart, reconciles journal states with the global cycle_id.
+- **Continuous operation**: Runs indefinitely, handling interruptions gracefully.
 
 ---
 
@@ -467,14 +476,17 @@ python -m backend.scheduler --dev
 - 4-hour cycle with consolidation at minutes 25,30,35,40,45
 - State persistence and recovery
 - Background operation support
+- Robust recovery from uneven journal states
+- Cycle_id properly increments (1,2,3,4) and resets to 1
+- Continuous indefinite operation
 
 ---
 
 # Future Work
 
 ## Phase 6 — Autonomous Cognition 🚧
-- Continuous background cognition
-- Selective context retrieval
+- Continuous background cognition (✅ Scheduler stable)
+- Selective context retrieval (🚧 Next)
 - Memory refinement
 - Project understanding
 - User understanding
@@ -512,4 +524,3 @@ The Conversation Archive preserves experience.
 The Cognitive Engine must remain grounded in persistent artifacts and must never manufacture experience simply because a plausible story would fit the current context.
 
 Intelligence is expected to emerge from the interaction of independent cognitive processes operating over a persistent body of shared knowledge.
-
