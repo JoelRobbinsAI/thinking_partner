@@ -16,10 +16,10 @@ Expand domain knowledge of typical Chinese‑medicine case presentations, treatm
 The user is a Chinese medicine practitioner.
 
 ## Goals
-The user aims to actively use the Python-based thinking partner tool in their Chinese medicine practice.
+The user aims to actively use the Python-based thinking partner tool in their Chinese medicine practice by collaborating on specific cases and refining the tool's workflow.
 
 ## Preferences
-The user is open to detailed case discussions and refining the tool's workflow.
+The user is open to detailed case discussions and refining the tool's workflow, emphasizing collaborative reasoning.
 
 ---
-*Last updated: 2026-08-09 17:50:31*
+*Last updated: 2026-08-10 15:09:34*
