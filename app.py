@@ -8,7 +8,7 @@ from pathlib import Path
 from backend.config import load_workspace
 from backend.conversation_manager import ConversationManager
 from backend.llm import OpenRouterLLM
-from backend.prompt_builder import PromptBuilder
+from backend.prompt_builder_with_journals import PromptBuilderWithJournals
 
 class ConversationApp:
     def __init__(self):
@@ -24,8 +24,8 @@ class ConversationApp:
         # Load workspace config (returns a Workspace object)
         self.workspace = load_workspace(workspace_name)
         
-        # Initialize components
-        self.prompt_builder = PromptBuilder()
+        # Initialize components with ChromaDB support
+        self.prompt_builder = PromptBuilderWithJournals(workspace_name=workspace_name)
         self.llm = OpenRouterLLM(model=self.workspace.model)
         self.conversation_manager = ConversationManager(self.workspace)
         
@@ -177,6 +177,7 @@ system_prompt: |
   - Help the user explore ideas
 
   Be curious, warm, and insightful. Focus on understanding rather than just answering.
+  Always respond in English.
 
 workspace_name: {name}
 workspace_dir: workspaces/{name}
@@ -188,6 +189,8 @@ workspace_dir: workspaces/{name}
             workspace_dir = Path(f"workspaces/{name}")
             workspace_dir.mkdir(parents=True, exist_ok=True)
             (workspace_dir / "conversations").mkdir(parents=True, exist_ok=True)
+            (workspace_dir / "cognitive_journals").mkdir(parents=True, exist_ok=True)
+            (workspace_dir / "canonical").mkdir(parents=True, exist_ok=True)
     
     def _show_status(self):
         """Show current workspace and conversation status."""
@@ -220,7 +223,7 @@ workspace_dir: workspaces/{name}
         
         # Switch workspace
         self.current_workspace_name = new_workspace
-        self.prompt_builder = PromptBuilder()
+        self.prompt_builder = PromptBuilderWithJournals(workspace_name=new_workspace)
         self.llm = OpenRouterLLM(model=self.workspace.model)
         self.conversation_manager = ConversationManager(self.workspace)
         
@@ -264,14 +267,6 @@ workspace_dir: workspaces/{name}
                 return
         print(f"\n❌ Conversation '{conv_id}' not found.")
     
-    def _save_conversation(self):
-        """Save the current conversation to disk."""
-        if self.conversation and hasattr(self.conversation, 'filepath'):
-            # The conversation has a filepath, save it
-            content = self.conversation.content
-            if content:
-                self.conversation.filepath.write_text(content, encoding="utf-8")
-    
     def run(self):
         """Main conversation loop."""
         print("\n🧠 Thinking Partner")
@@ -283,9 +278,6 @@ workspace_dir: workspaces/{name}
         print("  /load [id]        - Load a specific conversation")
         print("  /exit or /quit    - Exit")
         print()
-        
-        # Store conversation messages locally
-        messages = []
         
         while True:
             user_input = input("\nYou: ").strip()
@@ -327,26 +319,20 @@ workspace_dir: workspaces/{name}
                     print("  Usage: /load [conversation_id]")
                 continue
             
-            # Add user message to local history
-            messages.append({"role": "user", "content": user_input})
+            # Add user message to conversation
+            self.conversation.append_user(user_input)
             
-            # Build prompt with conversation history
-            prompt_messages = self.prompt_builder.build(self.workspace, self.conversation)
-            
-            # Add the conversation history to the prompt
-            # The build method already includes conversation history via to_messages()
+            # Build prompt with conversation history AND relevant journal entries
+            messages = self.prompt_builder.build(self.workspace, self.conversation, user_input)
             
             # Get response from LLM
             print("🤔 Thinking...")
-            response = self.llm.generate(prompt_messages)
+            response = self.llm.generate(messages)
             
             print(f"\nAssistant: {response}")
             
-            # Add assistant response to local history
-            messages.append({"role": "assistant", "content": response})
-            
-            # TODO: Save conversation to disk
-            # For now, we'll just keep it in memory
+            # Add assistant response to conversation
+            self.conversation.append_assistant(response)
 
 if __name__ == "__main__":
     app = ConversationApp()

@@ -1,5 +1,5 @@
 # Workspace: personal
-model: openai/gpt-oss-120b
+model: mistralai/mistral-nemo:latest
 system_prompt: |
   You are a Thinking Partner for personal reflection and growth.
 
@@ -11,6 +11,7 @@ system_prompt: |
 
   Be warm, empathetic, and insightful.
   Always respond in English.
+
 
 workspace_name: personal
 workspace_dir: workspaces/personal

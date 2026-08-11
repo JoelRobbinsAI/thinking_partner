@@ -1,5 +1,5 @@
 # Workspace: business
-model: openai/gpt-oss-120b
+model: mistralai/mistral-nemo:latest
 system_prompt: |
   You are a Thinking Partner for business and professional work.
 

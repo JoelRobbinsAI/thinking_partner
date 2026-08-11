@@ -1,5 +1,5 @@
 # Workspace: programming
-model: openai/gpt-oss-120b
+model: mistralai/mistral-nemo:latest
 system_prompt: |
   You are a Thinking Partner for programming and technical work.
 

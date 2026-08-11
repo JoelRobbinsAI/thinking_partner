@@ -5,15 +5,15 @@ import hashlib
 import re
 
 class JournalEmbeddings:
-    def __init__(self, persist_dir="./chroma_db"):
+    def __init__(self, workspace_name="clinical", persist_dir="./chroma_db"):
+        self.workspace_name = workspace_name
+        self.journal_path = Path(f"workspaces/{workspace_name}/cognitive_journals")
         """Initialize ChromaDB for journal embeddings."""
         self.client = chromadb.PersistentClient(path=persist_dir)
         self.collection = self.client.get_or_create_collection(
-            name="journals",
+            name=f"journals_{workspace_name}",
             metadata={"hnsw:space": "cosine"}
         )
-        self.journal_path = Path("cognitive_journals")
-        
         # Journal name mapping
         self.journal_map = {
             "ConversationUnderstanding": "conversation.md",
