@@ -1,7 +1,3 @@
-Here's the updated README with the RAG pipeline and performance improvements:
-
----
-
 # Thinking Partner
 
 A personal AI Thinking Partner built around persistent conversations, modular cognition, reflection, and long-term memory.
@@ -96,7 +92,17 @@ The Conversation Interface supports multiple workspaces, each with its own:
 - `/new` - Start a new conversation
 - `/conversations` - List conversations in current workspace
 - `/load [id]` - Load a specific conversation
+- `/search [query]` - Search the web via DuckDuckGo
 - `/exit` or `/quit` - Exit the program
+
+**Natural language search triggers:**
+- `search for [query]`
+- `look up [query]`
+- `find information about [query]`
+- `what is [query]`
+- `tell me about [query]`
+
+When triggered, the system searches the web and synthesizes a concise answer using the LLM.
 
 ```text
 User
@@ -364,6 +370,18 @@ Thinking Partner uses ChromaDB for efficient semantic search:
 
 ---
 
+# Web Search (DuckDuckGo)
+
+Thinking Partner includes integrated web search:
+
+- **Command**: `/search [query]` or natural language triggers
+- **Triggers**: "search for", "look up", "find information about", "what is", "tell me about"
+- **Results**: Top 3 search results with links
+- **Synthesis**: LLM summarizes results into a concise answer
+- **Privacy**: No API key required (DuckDuckGo)
+
+---
+
 # Canonical Memory
 
 Canonical Memory represents the current understanding of the system.
@@ -550,12 +568,18 @@ python -m backend.scheduler --dev
 - Workspace-aware collections
 - Automatic embedding of new journal entries
 
+## Phase 7 — Web Search ✅
+- DuckDuckGo integration
+- `/search` command
+- Natural language triggers ("search for", "look up", "what is", etc.)
+- LLM synthesis of search results
+- No API key required
+
 ---
 
 # Future Work
 
-## Phase 7 — Enhanced Capabilities 🚧
-- DuckDuckGo search integration
+## Phase 8 — Enhanced Capabilities 🚧
 - OpenWebUI/Conduit portability
 - Voice interface (TTS/STT)
 - Memory refinement and consolidation improvements
@@ -603,4 +627,3 @@ The Conversation Archive preserves experience.
 The Cognitive Engine must remain grounded in persistent artifacts and must never manufacture experience simply because a plausible story would fit the current context.
 
 Intelligence is expected to emerge from the interaction of independent cognitive processes operating over a persistent body of shared knowledge.
-

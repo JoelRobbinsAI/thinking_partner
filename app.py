@@ -9,6 +9,7 @@ from backend.config import load_workspace
 from backend.conversation_manager import ConversationManager
 from backend.llm import OpenRouterLLM
 from backend.prompt_builder_with_journals import PromptBuilderWithJournals
+from ddgs import DDGS
 
 class ConversationApp:
     def __init__(self):
@@ -266,7 +267,15 @@ workspace_dir: workspaces/{name}
                 self._show_status()
                 return
         print(f"\n❌ Conversation '{conv_id}' not found.")
-    
+    def _search_web(self, query):
+        """Search DuckDuckGo and return results."""
+        try:
+            with DDGS() as ddgs:
+                results = list(ddgs.text(query, max_results=3))
+                return results
+        except Exception as e:
+            print(f"⚠️ Search error: {e}")
+            return []
     def run(self):
         """Main conversation loop."""
         print("\n🧠 Thinking Partner")
@@ -278,22 +287,62 @@ workspace_dir: workspaces/{name}
         print("  /load [id]        - Load a specific conversation")
         print("  /exit or /quit    - Exit")
         print()
-        
+
         while True:
             user_input = input("\nYou: ").strip()
-            
+
             if not user_input:
                 continue
-            
+
+            # Natural language search triggers
+            search_triggers = ["search for", "look up", "find information about", "what is", "tell me about"]
+            is_search = False
+            query = user_input
+
+            for trigger in search_triggers:
+                if user_input.lower().startswith(trigger):
+                    query = user_input[len(trigger):].strip()
+                    is_search = True
+                    break
+
+            if is_search and query:
+                print(f"🔍 Searching: {query}")
+                results = self._search_web(query)
+
+                if not results:
+                    print("  No results found.")
+                    self.conversation.append_user(user_input)
+                    self.conversation.append_assistant("I searched but found no results.")
+                    continue
+
+                print("\n📊 Search Results:")
+                for i, result in enumerate(results, 1):
+                    print(f"\n{i}. {result.get('title', 'Untitled')}")
+                    print(f"   {result.get('body', '')[:200]}...")
+                    print(f"   🔗 {result.get('href', '')}")
+
+                context = f"Search results for '{query}':\n"
+                for result in results[:3]:
+                    context += f"- {result.get('title')}: {result.get('body')[:150]}...\n"
+
+                summary_prompt = f"Based on these search results, provide a concise, helpful answer to: '{query}'\n\nResults:\n{context}"
+                print("\n🤔 Synthesizing answer...")
+                summary = self.llm.generate([{"role": "user", "content": summary_prompt}])
+                print(f"\n🌤️ Answer: {summary}")
+
+                self.conversation.append_user(user_input)
+                self.conversation.append_assistant(f"{summary}")
+                continue
+
             # Handle commands
             if user_input.lower() in ["/exit", "/quit"]:
                 print("\n👋 Goodbye!")
                 break
-            
+
             if user_input.lower() == "/workspaces":
                 self._list_workspaces()
                 continue
-            
+
             if user_input.startswith("/workspace"):
                 parts = user_input.split()
                 if len(parts) >= 2:
@@ -302,15 +351,15 @@ workspace_dir: workspaces/{name}
                     print("  Usage: /workspace [name]")
                     self._list_workspaces()
                 continue
-            
+
             if user_input.lower() == "/new":
                 self._start_new_conversation()
                 continue
-            
+
             if user_input.lower() == "/conversations":
                 self._list_conversations()
                 continue
-            
+
             if user_input.startswith("/load"):
                 parts = user_input.split()
                 if len(parts) >= 2:
@@ -318,20 +367,45 @@ workspace_dir: workspaces/{name}
                 else:
                     print("  Usage: /load [conversation_id]")
                 continue
-            
-            # Add user message to conversation
+
+            if user_input.startswith("/search"):
+                query = user_input[7:].strip()
+                if not query:
+                    print("  Usage: /search [query]")
+                    continue
+
+                print("🔍 Searching...")
+                results = self._search_web(query)
+
+                if not results:
+                    print("  No results found.")
+                    continue
+
+                print("\n📊 Search Results:")
+                for i, result in enumerate(results, 1):
+                    print(f"\n{i}. {result.get('title', 'Untitled')}")
+                    print(f"   {result.get('body', '')[:200]}...")
+                    print(f"   🔗 {result.get('href', '')}")
+
+                context = f"Search results for '{query}':\n"
+                for result in results[:3]:
+                    context += f"- {result.get('title')}: {result.get('body')[:150]}...\n"
+
+                summary_prompt = f"Based on these search results, provide a concise, helpful answer to: '{query}'\n\nResults:\n{context}"
+                print("\n🤔 Synthesizing answer...")
+                summary = self.llm.generate([{"role": "user", "content": summary_prompt}])
+                print(f"\n🌤️ Answer: {summary}")
+
+                self.conversation.append_user(f"/search {query}")
+                self.conversation.append_assistant(f"{summary}")
+                continue
+
+            # Regular conversation
             self.conversation.append_user(user_input)
-            
-            # Build prompt with conversation history AND relevant journal entries
             messages = self.prompt_builder.build(self.workspace, self.conversation, user_input)
-            
-            # Get response from LLM
             print("🤔 Thinking...")
             response = self.llm.generate(messages)
-            
             print(f"\nAssistant: {response}")
-            
-            # Add assistant response to conversation
             self.conversation.append_assistant(response)
 
 if __name__ == "__main__":
