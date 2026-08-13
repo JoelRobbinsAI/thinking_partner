@@ -2,7 +2,7 @@
 """
 Thinking Partner - Conversation Interface
 """
-
+import pyttsx3
 import json
 from pathlib import Path
 from backend.config import load_workspace
@@ -28,6 +28,8 @@ class ConversationApp:
         # Initialize components with ChromaDB support
         self.prompt_builder = PromptBuilderWithJournals(workspace_name=workspace_name)
         self.llm = OpenRouterLLM(model=self.workspace.model)
+        self.tts_engine = pyttsx3.init()
+        self.tts_enabled = True
         self.conversation_manager = ConversationManager(self.workspace)
         
         # Select conversation
@@ -221,13 +223,15 @@ workspace_dir: workspaces/{name}
             return
         
         print(f"\n🔄 Switching from '{self.current_workspace_name}' to '{new_workspace}'...")
-        
+
         # Switch workspace
         self.current_workspace_name = new_workspace
         self.prompt_builder = PromptBuilderWithJournals(workspace_name=new_workspace)
+        self.workspace = load_workspace(new_workspace)
         self.llm = OpenRouterLLM(model=self.workspace.model)
         self.conversation_manager = ConversationManager(self.workspace)
-        
+        # TTS is already initialized in __init__, no need to reinitialize
+
         # Select conversation in new workspace
         self.conversation_path = self._select_conversation()
         self.conversation = self._load_conversation_content()
@@ -285,6 +289,7 @@ workspace_dir: workspaces/{name}
         print("  /new              - Start a new conversation")
         print("  /conversations    - List conversations in this workspace")
         print("  /load [id]        - Load a specific conversation")
+        print("  /voice            - Toggle text-to-speech on/off")
         print("  /exit or /quit    - Exit")
         print()
 
@@ -333,7 +338,12 @@ workspace_dir: workspaces/{name}
                 self.conversation.append_user(user_input)
                 self.conversation.append_assistant(f"{summary}")
                 continue
-
+            # Voice toggle
+            if user_input.lower() == "/voice":
+                self.tts_enabled = not self.tts_enabled
+                status = "on" if self.tts_enabled else "off"
+                print(f"  Voice is now {status}")
+                continue
             # Handle commands
             if user_input.lower() in ["/exit", "/quit"]:
                 print("\n👋 Goodbye!")
@@ -408,6 +418,10 @@ workspace_dir: workspaces/{name}
             print(f"\nAssistant: {response}")
             self.conversation.append_assistant(response)
 
+            # Speak the response
+            if self.tts_enabled:
+                self.tts_engine.say(response)
+                self.tts_engine.runAndWait()
 if __name__ == "__main__":
     app = ConversationApp()
     app.run()
