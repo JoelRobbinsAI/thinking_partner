@@ -1,6 +1,6 @@
 name: Clinical
 
-model: mistralai/mistral-nemo:latest
+model: openai/gpt-oss-20b
 
 system_prompt: prompts/clinical.md
 

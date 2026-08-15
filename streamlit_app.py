@@ -49,7 +49,7 @@ with st.sidebar:
             st.session_state.workspace = selected_workspace
             st.session_state.conversation_id = None
             st.session_state.messages = []
-            st.rerun()
+            # st.rerun()  # REMOVED
     else:
         st.warning("No workspaces found. Make sure API is running.")
     
@@ -71,7 +71,7 @@ with st.sidebar:
                     st.session_state.conversation_id = data.get("conversation_id")
                     st.session_state.messages = []
                     st.success("New conversation created!")
-                    st.rerun()
+                    # st.rerun()  # REMOVED
             except Exception as e:
                 st.error(f"Error: {e}")
         
@@ -120,7 +120,7 @@ with st.sidebar:
                                     "role": role,
                                     "content": "\n".join(buffer).strip()
                                 })
-                            st.rerun()
+                            # st.rerun()  # REMOVED
     
     st.divider()
     st.header("Settings")
@@ -147,7 +147,9 @@ for msg in st.session_state.messages:
                     st.error(f"Voice error: {e}")
 
 # Chat input
-if prompt := st.chat_input("What would you like to think about?"):
+prompt = st.chat_input("What would you like to think about?")
+
+if prompt:
     if not st.session_state.workspace:
         st.error("Please select a workspace first.")
     else:
@@ -247,8 +249,6 @@ if prompt := st.chat_input("What would you like to think about?"):
                                         )
                                 except Exception as e:
                                     pass
-                            
-                            # st.rerun()  # Commented out to allow audio to play
                         else:
                             st.error(f"API Error: {response.status_code}")
                     except Exception as e:
