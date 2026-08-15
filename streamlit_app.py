@@ -24,7 +24,7 @@ if "audio_playing" not in st.session_state:
 if "button_counter" not in st.session_state:
     st.session_state.button_counter = 0
 
-API_URL = "http://localhost:8000"
+API_URL = "http://192.168.12.17:8000"
 
 # Sidebar
 with st.sidebar:
@@ -234,16 +234,21 @@ if prompt := st.chat_input("What would you like to think about?"):
                             
                             if st.session_state.tts_enabled:
                                 try:
-                                    tts = gTTS(text=reply, lang="en", tld="co.uk", slow=False)
-                                    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-                                        tts.save(fp.name)
-                                        pygame.mixer.init()
-                                        pygame.mixer.music.load(fp.name)
-                                        pygame.mixer.music.play()
+                                    tts_response = requests.post(
+                                        f"{API_URL}/tts",
+                                        json={"text": reply}
+                                    )
+                                    if tts_response.status_code == 200:
+                                        audio_data = tts_response.json()
+                                        audio_url = audio_data['audio_url']
+                                        st.markdown(
+                                            f'<audio controls autoplay playsinline style="width: 100%;"><source src="{audio_url}" type="audio/mpeg"></audio>',
+                                            unsafe_allow_html=True
+                                        )
                                 except Exception as e:
                                     pass
                             
-                            st.rerun()
+                            # st.rerun()  # Commented out to allow audio to play
                         else:
                             st.error(f"API Error: {response.status_code}")
                     except Exception as e:
