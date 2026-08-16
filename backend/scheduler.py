@@ -59,19 +59,19 @@ class Scheduler:
 
         self.journals = {
             "ConversationUnderstanding": CognitiveJournal(
-                "conversation.md"
+                "conversation"
             ),
             "ProjectUnderstanding": CognitiveJournal(
-                "projects.md"
+                "projects"
             ),
             "UserUnderstanding": CognitiveJournal(
-                "user.md"
+                "user"
             ),
             "SelfImprovement": CognitiveJournal(
-                "self.md"
+                "self"
             ),
             "OpenContemplation": CognitiveJournal(
-                "open_contemplation.md"
+                "open_contemplation"
             ),
         }
 
@@ -279,7 +279,7 @@ class Scheduler:
                 job_name = self.jobs[consolidation_index].__class__.__name__
                 
                 print(f"  → Consolidating {job_name} journal (cycle {self.state['cycle_id']}, hour 4)...")
-                self.consolidation.run()
+                self.consolidation.run(self.state["cycle_id"])
                 print("  ✓ Consolidation complete")
                 
                 print(f"  → Updating canonical memory for {job_name}...")

@@ -10,64 +10,73 @@ builder = CognitivePromptBuilder()
 llm = CognitiveLLM()
 
 conversation_context = ConversationContextRetriever(
-    "conversations"
+    "conversations",
+    workspaces_root="workspaces",
 )
 
 conversation_journal = CognitiveJournal(
-    "conversation.md"
+    "conversation"
 )
 
 project_journal = CognitiveJournal(
-    "projects.md"
+    "projects"
 )
 
 user_journal = CognitiveJournal(
-    "user.md"
+    "user"
 )
 
 self_journal = CognitiveJournal(
-    "self.md"
+    "self"
 )
 
 open_contemplation_journal = CognitiveJournal(
-    "open_contemplation.md"
+    "open_contemplation"
 )
 
 conversation_journal_retriever = CognitiveJournalRetriever(
-    "conversation.md"
+    "conversation"
 )
 
 project_journal_retriever = CognitiveJournalRetriever(
-    "projects.md"
+    "projects"
 )
 
 user_journal_retriever = CognitiveJournalRetriever(
-    "user.md"
+    "user"
 )
 
 self_journal_retriever = CognitiveJournalRetriever(
-    "self.md"
+    "self"
 )
 
 open_contemplation_journal_retriever = CognitiveJournalRetriever(
-    "open_contemplation.md"
+    "open_contemplation"
 )
-
 
 class ConversationUnderstanding:
     job = "Conversation Understanding"
     object_of_attention = "Recent conversations"
 
     reasoning_instructions = """
-Prioritize the Conversation Context.
+Your task is to develop understanding of conversations.
 
-Use the recent Conversation Journal entries as supporting background.
+First, determine whether there is new conversation context available:
 
-Focus on understanding:
+- If the Conversation Context or Conversation Journal contains NEW information:
+  → Focus on integrating new information with existing understanding
+  → Identify what has changed, been clarified, or newly emerged
 
-- What happened.
-- What was learned.
-- What should change because of what was learned.
+- If there is NO new information (the context is unchanged since your last reflection):
+  → You are in contemplation mode
+  → Re-examine the existing Conversation Journal and Consolidated Understanding
+  → Look for patterns you may have missed
+  → Refine your interpretation of what happened
+  → Consider deeper implications that weren't previously apparent
+  → Connect this understanding to other domains (User, Projects, Self)
+
+Regardless of which mode you're in, your reflection should be substantive and specific.
+Reference specific evidence from the context provided.
 """
 
     def run(self, cycle_id):
@@ -87,31 +96,35 @@ Focus on understanding:
 
         reflection = llm.generate(prompt)
 
-        conversation_journal.append(
+        conversation_journal.append_reflection(
             self.job,
             reflection,
             cycle_id,
         )
-
 
 class ProjectUnderstanding:
     job = "Project Understanding"
     object_of_attention = "Current projects"
 
     reasoning_instructions = """
-Prioritize Project Context.
+Your task is to develop understanding of projects.
 
-Use the Conversation Journal as the primary source of evidence about
-projects.
+First, determine whether there is new information available:
 
-Use recent Project Journal entries as supporting working memory.
+- If the Conversation Journal contains NEW project-related information:
+  → Focus on integrating new information with existing project understanding
+  → Identify what has changed, been clarified, or newly emerged about projects
 
-Focus on:
+- If there is NO new information:
+  → You are in contemplation mode
+  → Re-examine the existing Project Journal and Consolidated Understanding
+  → Look for patterns in project progress, obstacles, or priorities
+  → Refine your understanding of project direction
+  → Consider connections between this project and others
+  → Identify what questions remain unanswered about projects
 
-- Active projects.
-- Progress.
-- Obstacles.
-- Next priorities.
+Regardless of which mode you're in, your reflection should be substantive and specific.
+Reference specific evidence from the context provided.
 """
 
     def run(self, cycle_id):
@@ -131,31 +144,35 @@ Focus on:
 
         reflection = llm.generate(prompt)
 
-        project_journal.append(
+        project_journal.append_reflection(
             self.job,
             reflection,
             cycle_id,
         )
-
 
 class UserUnderstanding:
     job = "User Understanding"
     object_of_attention = "The user"
 
     reasoning_instructions = """
-Prioritize User Context.
+Your task is to develop understanding of the user.
 
-Use the Conversation Journal as the primary source of evidence about
-the user.
+First, determine whether there is new information available:
 
-Use recent User Journal entries as supporting working memory.
+- If the Conversation Journal contains NEW user-related information:
+  → Focus on integrating new information with existing user understanding
+  → Identify what has changed, been clarified, or newly emerged about the user
 
-Focus on:
+- If there is NO new information:
+  → You are in contemplation mode
+  → Re-examine the existing User Journal and Consolidated Understanding
+  → Look for patterns in user behavior, preferences, or goals
+  → Refine your understanding of the user's long-term tendencies
+  → Consider deeper motivations or unstated needs
+  → Identify what questions remain unanswered about the user
 
-- Goals.
-- Preferences.
-- Habits.
-- Long-term patterns.
+Regardless of which mode you're in, your reflection should be substantive and specific.
+Reference specific evidence from the context provided.
 """
 
     def run(self, cycle_id):
@@ -175,31 +192,35 @@ Focus on:
 
         reflection = llm.generate(prompt)
 
-        user_journal.append(
+        user_journal.append_reflection(
             self.job,
             reflection,
             cycle_id,
         )
-
 
 class SelfImprovement:
     job = "Self Improvement"
     object_of_attention = "My own reasoning"
 
     reasoning_instructions = """
-Prioritize the Self Journal.
+Your task is to develop understanding of your own reasoning and operation.
 
-Use the Conversation Journal as evidence about actual interactions
-and the quality of the system's behavior.
+First, determine whether there is new information available:
 
-Use recent Self Journal entries as supporting working memory.
+- If the Conversation Journal or Self Journal contains NEW information:
+  → Focus on integrating new information with existing self-understanding
+  → Identify mistakes, missed opportunities, or successful strategies that have emerged
 
-Focus on:
+- If there is NO new information:
+  → You are in contemplation mode
+  → Re-examine the existing Self Journal and Consolidated Understanding
+  → Look for patterns in your reasoning behavior
+  → Refine your understanding of your own strengths and weaknesses
+  → Consider what improvements have been most effective
+  → Identify what new capabilities you could develop
 
-- Mistakes.
-- Missed opportunities.
-- Better reasoning strategies.
-- Improvements to the system's own behavior.
+Regardless of which mode you're in, your reflection should be substantive and specific.
+Reference specific evidence from the context provided.
 """
 
     def run(self, cycle_id):
@@ -219,7 +240,7 @@ Focus on:
 
         reflection = llm.generate(prompt)
 
-        self_journal.append(
+        self_journal.append_reflection(
             self.job,
             reflection,
             cycle_id,
@@ -228,15 +249,28 @@ Focus on:
 
 class OpenContemplation:
     job = "Open Contemplation"
-    object_of_attention = "Anything not already addressed"
+    object_of_attention = "Synthesis across all knowledge"
 
     reasoning_instructions = """
-Use the available cognitive context.
+Your task is to synthesize understanding across all cognitive domains.
 
-Explore ideas, relationships, and questions that were not addressed
-by the other cognitive jobs.
+First, determine whether there is new information available:
 
-Remain grounded in the supplied artifacts.
+- If any journal contains NEW entries since your last reflection:
+  → Focus on integrating new information with existing understanding
+  → Identify connections between new and existing knowledge
+
+- If there is NO new information:
+  → You are in idle contemplation mode
+  → Re-examine existing journals and canonical memory
+  → Look for connections between domains (User ↔ Projects ↔ Self)
+  → Identify patterns that are emerging over time
+  → Spot gaps or contradictions in understanding
+  → Refine and deepen existing insights
+  → Consider what questions remain unanswered
+
+Regardless of which mode you're in, your reflection should be substantive and specific.
+Avoid generic statements. Reference specific evidence from the context provided.
 """
 
     def run(self, cycle_id):
@@ -268,82 +302,87 @@ Remain grounded in the supplied artifacts.
 
         reflection = llm.generate(prompt)
 
-        open_contemplation_journal.append(
+        open_contemplation_journal.append_reflection(
             self.job,
             reflection,
             cycle_id,
         )
-
 
 class Consolidation:
     job = "Consolidation"
     object_of_attention = "Working memory"
 
     reasoning_instructions = """
-Synthesize the four recent entries from this Cognitive Journal.
+Synthesize the working journal entries from this cycle.
 
-Preserve only information that is supported by the entries.
+Compare them with the existing consolidated understanding.
 
-Identify the most important stable understanding that should
-survive into the next working-memory cycle.
+Identify:
+- New insights that should be incorporated
+- Patterns that are becoming clearer
+- Understanding that should be refined or updated
 
-Do not introduce new facts, interpretations, questions,
-recommendations, or topics that are not supported by the entries.
+Build upon the existing consolidated understanding rather than replacing it.
 """
 
     output_instructions = """
-Write exactly one short paragraph synthesizing the four entries.
+Write a single paragraph that represents the updated consolidated understanding.
 
-Do not use headings, bullet points, numbered lists, questions,
-or additional sections.
+This should build upon the previous consolidated understanding (if any) and incorporate new insights from the working journal.
 
-The result should be concise enough to function as one working-memory
-entry.
+Do not use headings, bullet points, numbered lists, questions, or additional sections.
+
+The result should be concise, coherent, and build upon existing understanding.
 """
 
-    def run(self):
+    def run(self, cycle_id: int):
         journals = [
             (
                 "Conversation Journal",
-                conversation_journal,
+                CognitiveJournal("conversation"),
             ),
             (
                 "Project Journal",
-                project_journal,
+                CognitiveJournal("projects"),
             ),
             (
                 "User Journal",
-                user_journal,
+                CognitiveJournal("user"),
             ),
             (
                 "Self Journal",
-                self_journal,
+                CognitiveJournal("self"),
             ),
             (
                 "Open Contemplation Journal",
-                open_contemplation_journal,
+                CognitiveJournal("open_contemplation"),
             ),
         ]
 
         for title, journal in journals:
-            entries = journal.read_for_consolidation()
-
-            if not entries:
+            # Get working entries from this cycle
+            working_entries = journal.read_for_consolidation(cycle_id)
+            if not working_entries:
+                print(f"  → No working entries for {title} in cycle {cycle_id}, skipping")
                 continue
 
+            # Get existing consolidated understanding
+            existing_consolidated = journal.read_consolidated(limit=1)
+            if not existing_consolidated:
+                existing_consolidated = "(No existing consolidated understanding. Create the first one.)"
+
+            # Build prompt
             prompt = builder.build(
                 self,
                 [
-                    (
-                        title,
-                        entries,
-                    ),
+                    ("Existing Consolidated Understanding", existing_consolidated),
+                    ("Working Entries from This Cycle", working_entries),
                 ],
             )
 
+            # Generate new consolidation
             reflection = llm.generate(prompt)
 
-            journal.replace_recent(
-                self.job,
-                reflection,
-            )
+            # Append to consolidated journal (append-only)
+            journal.append_consolidation(reflection, cycle_id)
+            print(f"  → Appended consolidation to {title} (cycle {cycle_id})")

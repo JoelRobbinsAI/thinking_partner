@@ -1,12 +1,12 @@
 import os
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 from backend.canonical_memory import CanonicalMemory
 from backend.cognitive_llm import CognitiveLLM
 
 class CanonicalUpdateJob:
-    """Updates canonical memory based on consolidated journal entries."""
+    """Updates canonical memory by merging consolidated insights with existing understanding."""
     
     def __init__(self):
         self.canonical = CanonicalMemory()
@@ -35,21 +35,18 @@ class CanonicalUpdateJob:
                 continue
                 
             print(f"    → Found consolidation in {journal_file}")
-            print(f"    → Consolidation text: {consolidated[:100]}...")
             
-            if domain == "conversation":
-                self._process_conversation(consolidated)
+            # Get current canonical content
+            current_canonical = self.canonical.read_domain(domain)
+            
+            # Merge new consolidation with existing canonical memory
+            merged = self._merge_with_canonical(domain, consolidated, current_canonical)
+            
+            if merged:
+                print(f"  → Updating {domain} canonical memory...")
+                self._apply_merged_update(domain, merged)
             else:
-                current_canonical = self.canonical.read_domain(domain)
-                update = self._decide_update(domain, consolidated, current_canonical)
-                
-                if update["should_update"]:
-                    print(f"  → Updating {domain} canonical memory...")
-                    self._apply_update(domain, update)
-                else:
-                    print(f"  → No update needed for {domain}")
-                    if update.get("reason"):
-                        print(f"    Reason: {update['reason']}")
+                print(f"  → No update needed for {domain}")
         
         print("  ✓ Canonical memory update complete")
     
@@ -68,116 +65,68 @@ class CanonicalUpdateJob:
         
         # Find the most recent Consolidation entry
         for entry in reversed(entries):
-            if "Cycle: Consolidation" in entry or "Job: Consolidation" in entry:
-                return entry.strip()
+            if "Consolidation" in entry:
+                # Extract the content (skip the header)
+                lines = entry.split('\n')
+                # Find where the actual content starts (after the header)
+                content_start = 0
+                for i, line in enumerate(lines):
+                    if line.strip() and not line.startswith('#') and not line.startswith('Model:') and not line.startswith('Duration:'):
+                        content_start = i
+                        break
+                return '\n'.join(lines[content_start:]).strip()
         
         return None
     
-    def _decide_update(self, domain: str, consolidated: str, current_canonical: str) -> Dict:
-        """Ask the LLM whether canonical memory should be updated."""
+    def _merge_with_canonical(self, domain: str, consolidated: str, current_canonical: str) -> Optional[str]:
+        """Ask LLM to merge consolidated insight with existing canonical memory."""
         
-        print(f"    → Asking LLM about {domain} update...")
+        print(f"    → Asking LLM to merge {domain}...")
         
-        prompt = f"""You are updating canonical memory for a thinking partner system.
+        if not current_canonical or current_canonical.strip() == "":
+            # No existing canonical memory — just use the consolidated content
+            print(f"    → No existing canonical memory, using consolidated as initial")
+            return consolidated
+        
+        prompt = f"""You are evolving canonical memory for a thinking partner system.
 
 Domain: {domain}
 
-Current canonical memory:
-{current_canonical if current_canonical else "(No existing canonical memory)"}
+EXISTING CANONICAL MEMORY:
+{current_canonical}
 
-New consolidated reflection:
+NEW CONSOLIDATED INSIGHT:
 {consolidated}
 
-Task: Determine if the canonical memory should be updated based on this new reflection.
-Since this is the first update, you should almost certainly update the canonical memory.
+Your task: Evolve the canonical memory by merging the new insight with the existing understanding.
 
-YOU MUST RESPOND EXACTLY IN THIS FORMAT. DO NOT DEVIATE.
+Guidelines:
+1. Preserve what is still true and relevant from the existing memory
+2. Update or refine anything that has changed
+3. Add new insights that were not previously captured
+4. Remove or deprecate anything that is no longer relevant
+5. Keep the overall structure similar (sections, bullet points, etc.)
+6. Write the updated content as a complete, coherent document
 
-Example response:
-UPDATE: yes
-REASON: New information about the user's profession and tool usage
-CHANGES:
-SECTION: Background
-CONTENT: The user is a Chinese medicine practitioner.
-SECTION: Interests
-CONTENT: The user is interested in discussing specific cases and refining reasoning workflows.
+The result should be the UPDATED canonical memory content for this domain.
+Do not include any explanations, headers, or meta-commentary.
+Just output the updated content.
 
-If no update is needed, respond with:
-UPDATE: no
-REASON: No new information that requires updating canonical memory
-
-Now respond with exactly the format above.
-"""
+UPDATED CANONICAL MEMORY:"""
         
         response = self.llm.generate(prompt)
         
-        print(f"    → LLM response for {domain}:")
-        print(f"    {response[:300]}...")
-        
-        parsed = self._parse_update_response(response)
-        print(f"    → Parsed result: should_update={parsed['should_update']}, changes={len(parsed['changes'])}")
-        
-        return parsed
+        print(f"    → Merge complete for {domain}")
+        return response.strip()
     
-    def _parse_update_response(self, response: str) -> Dict:
-        """Parse the LLM response into an update decision."""
-        result = {
-            "should_update": False,
-            "reason": "",
-            "changes": []
-        }
+    def _apply_merged_update(self, domain: str, merged_content: str):
+        """Apply the merged content to canonical memory."""
+        # Write the entire domain with the merged content
+        file_path = os.path.join(self.canonical.base_path, self.canonical.domains[domain])
         
-        lines = response.split('\n')
-        current_section = None
-        current_content = []
+        # Add metadata header
+        header = f"# {domain.title()} Memory\n\n"
+        content = header + merged_content + f"\n\n---\n*Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*"
         
-        for line in lines:
-            line = line.strip()
-            
-            if line.startswith('UPDATE:'):
-                result["should_update"] = 'yes' in line.lower()
-            elif line.startswith('REASON:'):
-                result["reason"] = line[7:].strip()
-            elif line.startswith('SECTION:'):
-                if current_section and current_content:
-                    result["changes"].append({
-                        "section": current_section,
-                        "content": '\n'.join(current_content).strip()
-                    })
-                current_section = line[8:].strip()
-                current_content = []
-            elif line.startswith('CONTENT:') and current_section:
-                current_content.append(line[8:].strip())
-            elif current_section and not line.startswith('---'):
-                current_content.append(line)
-                
-        if current_section and current_content:
-            result["changes"].append({
-                "section": current_section,
-                "content": '\n'.join(current_content).strip()
-            })
-            
-        return result
-    
-    def _apply_update(self, domain: str, update: Dict):
-        """Apply the update to canonical memory."""
-        for change in update["changes"]:
-            self.canonical.update_domain_section(
-                domain,
-                change["section"],
-                change["content"]
-            )
-    
-    def _process_conversation(self, consolidated: str):
-        """Process conversation journal and distribute to multiple domains."""
-        print(f"    → Processing conversation journal...")
-        print(f"    → Consolidated text: {consolidated[:100]}...")
-        
-        current_canonical = self.canonical.read_domain("user")
-        update = self._decide_update("user", consolidated, current_canonical)
-        
-        if update["should_update"]:
-            print(f"  → Updating user canonical memory from conversation...")
-            self._apply_update("user", update)
-        else:
-            print(f"  → No update needed for user from conversation")
+        with open(file_path, 'w') as f:
+            f.write(content)
