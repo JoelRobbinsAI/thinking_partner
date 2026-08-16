@@ -1,6 +1,7 @@
 from backend.prompt_builder import PromptBuilder
 from backend.journal_embeddings import JournalEmbeddings
 from backend.canonical_retriever import CanonicalMemoryRetriever
+from pathlib import Path
 
 class PromptBuilderWithJournals(PromptBuilder):
     def __init__(self, workspace_name="clinical"):
@@ -15,7 +16,20 @@ class PromptBuilderWithJournals(PromptBuilder):
     def build(self, workspace, conversation, user_query=None):
         messages = super().build(workspace, conversation)
         
+        # Include conversation summaries if they exist
+        summary_file = Path("workspaces") / workspace.name / f".{conversation.id}.summary.md"
+        summary_text = ""
+        if summary_file.exists():
+            summaries = summary_file.read_text()
+            summary_text = f"\n\n**Previous Conversation Summaries:**\n{summaries}"
+        
         if not user_query:
+            # Even without a query, add summaries
+            if summary_text:
+                for msg in messages:
+                    if msg['role'] == 'system':
+                        msg['content'] += summary_text
+                        break
             return messages
         
         # Get relevant journal entries
@@ -36,6 +50,10 @@ class PromptBuilderWithJournals(PromptBuilder):
             context += "\n\n## Relevant Journal Reflections\n\n"
             for entry in journal_results:
                 context += f"**From {entry['journal_name']} (Cycle {entry['cycle_id']}):**\n{entry['text'][:300]}...\n\n"
+        
+        # Add summaries to context
+        if summary_text:
+            context += summary_text
         
         if context:
             for msg in messages:

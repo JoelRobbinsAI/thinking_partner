@@ -49,7 +49,6 @@ with st.sidebar:
             st.session_state.workspace = selected_workspace
             st.session_state.conversation_id = None
             st.session_state.messages = []
-            # st.rerun()  # REMOVED
     else:
         st.warning("No workspaces found. Make sure API is running.")
     
@@ -71,7 +70,6 @@ with st.sidebar:
                     st.session_state.conversation_id = data.get("conversation_id")
                     st.session_state.messages = []
                     st.success("New conversation created!")
-                    # st.rerun()  # REMOVED
             except Exception as e:
                 st.error(f"Error: {e}")
         
@@ -120,7 +118,22 @@ with st.sidebar:
                                     "role": role,
                                     "content": "\n".join(buffer).strip()
                                 })
-                            # st.rerun()  # REMOVED
+                    
+                    # Delete button
+                    if st.button("🗑️ Delete this conversation", key=f"delete_{conv_id}"):
+                        try:
+                            response = requests.delete(
+                                f"{API_URL}/conversation/{st.session_state.workspace}/{conv_id}"
+                            )
+                            if response.status_code == 200:
+                                st.session_state.messages = []
+                                st.session_state.conversation_id = None
+                                st.success("Conversation deleted!")
+                                st.rerun()
+                            else:
+                                st.error(f"Failed to delete: {response.status_code} - {response.text}")
+                        except Exception as e:
+                            st.error(f"Error: {e}")
     
     st.divider()
     st.header("Settings")

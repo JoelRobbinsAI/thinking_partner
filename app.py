@@ -38,6 +38,8 @@ from backend.llm import OpenRouterLLM
 
 prompt_builder = PromptBuilderWithJournals()
 llm_client = OpenRouterLLM(model="mistralai/mistral-nemo:latest")
+from backend.summary_generator import SummaryGenerator
+summary_generator = SummaryGenerator(Path("workspaces"))
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
@@ -81,7 +83,8 @@ async def chat(request: ChatRequest):
         
         print("💾 Saving...")
         conv.append_assistant(response)
-        
+        summary_generator.ensure_summaries(request.workspace, conv)
+
         return ChatResponse(response=response, conversation_id=conv.id)
     except Exception as e:
         print(f"❌ ERROR: {e}")
@@ -109,6 +112,7 @@ async def search(request: dict):
             return {"results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/tts")
 async def text_to_speech(request: dict):
     from gtts import gTTS
@@ -134,5 +138,50 @@ async def get_audio(filename: str):
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="Audio not found")
     return FileResponse(path=filepath, media_type="audio/mpeg")
+
+@app.delete("/conversation/{workspace}/{conv_id}")
+async def delete_conversation(workspace: str, conv_id: str):
+    """Delete a conversation and its summary file."""
+    try:
+        print(f"🗑️ Delete request: workspace={workspace}, conv_id={conv_id}")
+        
+        conv_dir = Path("workspaces") / workspace / "conversations"
+        print(f"📁 Looking in: {conv_dir}")
+        
+        # Try to find the file by matching the conv_id (filename without .md)
+        filepath = conv_dir / f"{conv_id}.md"
+        
+        if not filepath.exists():
+            # Try with wildcard if not found
+            files = list(conv_dir.glob(f"{conv_id}*.md"))
+            if files:
+                filepath = files[0]
+            else:
+                raise HTTPException(status_code=404, detail=f"Conversation {conv_id} not found")
+        
+        # Read the file to get the conversation ID
+        content = filepath.read_text()
+        import re
+        match = re.search(r"id:\s*([a-f0-9\-]+)", content)
+        if match:
+            conversation_id = match.group(1)
+        else:
+            conversation_id = conv_id
+        
+        # Delete the conversation file
+        filepath.unlink()
+        print(f"🗑️ Deleted conversation: {filepath}")
+        
+        # Delete the summary file if it exists
+        summary_file = conv_dir.parent / f".{conversation_id}.summary.md"
+        if summary_file.exists():
+            summary_file.unlink()
+            print(f"🗑️ Deleted summary: {summary_file}")
+        
+        return {"status": "success", "message": f"Deleted conversation {conv_id}"}
+    except Exception as e:
+        print(f"❌ Delete error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

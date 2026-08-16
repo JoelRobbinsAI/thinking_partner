@@ -160,3 +160,9 @@ class CognitiveJournal:
             "# " + new_content + "\n",
             encoding="utf-8",
         )
+
+    def delete_all_entries(self):
+        """Delete all journal entries for this workspace."""
+        if self.filepath.exists():
+            self.filepath.unlink()
+            print(f"🗑️ Deleted journal file: {self.filepath}")
