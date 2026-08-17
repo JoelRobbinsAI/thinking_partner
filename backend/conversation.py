@@ -1,6 +1,4 @@
-#Conversation
-
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
@@ -14,6 +12,7 @@ class Conversation:
     created: datetime
     filepath: Path
     content: str
+    state: dict = field(default_factory=dict)
 
     @property
     def filename(self):
@@ -31,6 +30,15 @@ class Conversation:
 
     def append_assistant(self, text: str):
         self._append_message("Assistant", text)
+
+    def get_state(self):
+        """Return the current conversation state."""
+        return self.state
+
+    def update_state(self, new_state: dict):
+        """Update the conversation state and save."""
+        self.state = new_state
+        self.save()
 
     def to_messages(self, system_prompt=None):
         messages = []

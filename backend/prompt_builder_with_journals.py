@@ -10,7 +10,6 @@ class PromptBuilderWithJournals(PromptBuilder):
         self.journal_embeddings = JournalEmbeddings(workspace_name=workspace_name)
         self.canonical_retriever = CanonicalMemoryRetriever(workspace_name=workspace_name)
         
-        # Embed journal entries
         self.journal_embeddings.embed_all()
     
     def build(self, workspace, conversation, user_query=None):
@@ -23,22 +22,42 @@ class PromptBuilderWithJournals(PromptBuilder):
             summaries = summary_file.read_text()
             summary_text = f"\n\n**Previous Conversation Summaries:**\n{summaries}"
         
+        # Include conversation state
+        state_text = ""
+        if hasattr(conversation, 'state') and conversation.state:
+            state = conversation.state
+            state_text = "\n\n## Current Conversation State\n"
+            if state.get("current_topic"):
+                state_text += f"- Topic: {state['current_topic']}\n"
+            if state.get("intent"):
+                state_text += f"- Intent: {state['intent']}\n"
+            if state.get("user_mood"):
+                state_text += f"- User Mood: {state['user_mood']}\n"
+            if state.get("progress"):
+                state_text += f"- Progress: {state['progress']}\n"
+            if state.get("unresolved_questions"):
+                state_text += f"- Unresolved Questions: {', '.join(state['unresolved_questions'])}\n"
+            if state.get("decisions_made"):
+                state_text += f"- Decisions Made: {', '.join(state['decisions_made'])}\n"
+            if state.get("key_insights"):
+                state_text += f"- Key Insights: {', '.join(state['key_insights'])}\n"
+        
         if not user_query:
-            # Even without a query, add summaries
             if summary_text:
                 for msg in messages:
                     if msg['role'] == 'system':
                         msg['content'] += summary_text
                         break
+            if state_text:
+                for msg in messages:
+                    if msg['role'] == 'system':
+                        msg['content'] += state_text
+                        break
             return messages
         
-        # Get relevant journal entries
         journal_results = self.journal_embeddings.search_all_journals(user_query, n_results=2)
-        
-        # Get relevant canonical sections
         canonical_results = self.canonical_retriever.search(user_query, n_results=2)
         
-        # Combine into context
         context = ""
         
         if canonical_results:
@@ -51,9 +70,10 @@ class PromptBuilderWithJournals(PromptBuilder):
             for entry in journal_results:
                 context += f"**From {entry['journal_name']} (Cycle {entry['cycle_id']}):**\n{entry['text'][:300]}...\n\n"
         
-        # Add summaries to context
         if summary_text:
             context += summary_text
+        if state_text:
+            context += state_text
         
         if context:
             for msg in messages:

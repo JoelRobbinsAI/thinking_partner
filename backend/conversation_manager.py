@@ -1,7 +1,7 @@
-#Conversation Manager
 from pathlib import Path
 from datetime import datetime
 from uuid import uuid4
+import yaml
 
 from .conversation import Conversation
 
@@ -21,7 +21,6 @@ class ConversationManager:
         filename = f"{timestamp.strftime('%Y%m%d_%H%M%S')}.md"
         filepath = self.conversations_dir / filename
 
-        # Use provided model, or fall back to workspace.model
         model_name = model if model else self.workspace.model
 
         content = f"""---
@@ -30,44 +29,45 @@ title: {title}
 created: {timestamp.isoformat()}
 workspace: {self.workspace.name}
 model: {model_name}
+state: {{}}
 ---
 
 # {title}
 """
 
         filepath.write_text(content)
-
         return filepath
 
     def list_conversations(self):
-        """Return all conversation files, newest first."""
         return sorted(
             self.conversations_dir.glob("*.md"),
             reverse=True
         )
 
     def load_conversation(self, filepath):
-        """Load a conversation and return a Conversation object."""
-
         content = filepath.read_text()
-
         lines = content.splitlines()
-
         metadata = {}
 
         if lines and lines[0] == "---":
             for line in lines[1:]:
                 if line == "---":
                     break
-                
-                # Skip empty lines
                 if not line.strip():
                     continue
-                    
-                # Only process lines with a colon
                 if ":" in line:
                     key, value = line.split(":", 1)
                     metadata[key.strip()] = value.strip()
+
+        # Parse state from metadata
+        state = {}
+        if "state" in metadata:
+            try:
+                state = yaml.safe_load(metadata["state"])
+                if not isinstance(state, dict):
+                    state = {}
+            except:
+                state = {}
 
         return Conversation(
             id=metadata.get("id", ""),
@@ -77,4 +77,5 @@ model: {model_name}
             created=datetime.fromisoformat(metadata.get("created", datetime.now().isoformat())),
             filepath=filepath,
             content=content,
+            state=state
         )

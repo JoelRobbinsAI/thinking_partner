@@ -11,6 +11,8 @@ import uvicorn
 from typing import Optional
 from pathlib import Path
 from ddgs import DDGS
+import re
+import yaml
 
 app = FastAPI(title="Thinking Partner API")
 
@@ -47,7 +49,6 @@ async def chat(request: ChatRequest):
     try:
         print(f"📥 Received: workspace={request.workspace}, conv_id={request.conversation_id}")
         
-        # Create workspace-specific manager
         ws = Workspace(
             name=request.workspace,
             model="mistralai/mistral-nemo:latest",
@@ -79,10 +80,33 @@ async def chat(request: ChatRequest):
         messages = prompt_builder.build(workspace=ws, conversation=conv)
         
         print("🤔 Generating...")
-        response = llm_client.generate(messages)
+        full_response = llm_client.generate(messages)
+        
+        # Parse response and state
+        response = full_response
+        state_update = None
+        
+        if "STATE:" in full_response:
+            parts = full_response.split("STATE:", 1)
+            response = parts[0].strip()
+            if response.startswith("RESPONSE:"):
+                response = response.replace("RESPONSE:", "").strip()
+            
+            state_text = parts[1].strip()
+            try:
+                state_update = yaml.safe_load(state_text)
+                if not isinstance(state_update, dict):
+                    state_update = None
+            except:
+                state_update = None
         
         print("💾 Saving...")
         conv.append_assistant(response)
+        
+        if state_update:
+            conv.update_state(state_update)
+            print(f"📝 Updated conversation state")
+        
         summary_generator.ensure_summaries(request.workspace, conv)
 
         return ChatResponse(response=response, conversation_id=conv.id)
@@ -148,31 +172,25 @@ async def delete_conversation(workspace: str, conv_id: str):
         conv_dir = Path("workspaces") / workspace / "conversations"
         print(f"📁 Looking in: {conv_dir}")
         
-        # Try to find the file by matching the conv_id (filename without .md)
         filepath = conv_dir / f"{conv_id}.md"
         
         if not filepath.exists():
-            # Try with wildcard if not found
             files = list(conv_dir.glob(f"{conv_id}*.md"))
             if files:
                 filepath = files[0]
             else:
                 raise HTTPException(status_code=404, detail=f"Conversation {conv_id} not found")
         
-        # Read the file to get the conversation ID
         content = filepath.read_text()
-        import re
         match = re.search(r"id:\s*([a-f0-9\-]+)", content)
         if match:
             conversation_id = match.group(1)
         else:
             conversation_id = conv_id
         
-        # Delete the conversation file
         filepath.unlink()
         print(f"🗑️ Deleted conversation: {filepath}")
         
-        # Delete the summary file if it exists
         summary_file = conv_dir.parent / f".{conversation_id}.summary.md"
         if summary_file.exists():
             summary_file.unlink()
